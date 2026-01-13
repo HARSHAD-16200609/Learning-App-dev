@@ -57,17 +57,34 @@ icon:Icon(Icons.logout))
           //     ListTile(  
           //       title:Text(names[index])
           //     ))
-        body:GridView.builder(
-          itemCount:64,
-            gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(crossAxisCount: 8),
-            itemBuilder:(context,index)=> Container(
+        body:Center (
+            child : Stack(
+              // stacks container on top of each other
+              alignment: Alignment.center,
+          children:[
+            Container(
+              //big box
               margin:EdgeInsets.all(2),
-
-              height:10,
-             width:10,
-             color:Colors.deepPurpleAccent
-            )
-      ),
+              height:300,
+              width:300,
+              color:Colors.deepPurpleAccent
+          ),
+            //medium box
+            Container(
+                margin:EdgeInsets.all(2),
+                height:200,
+                width:200,
+                color:Colors.lightBlue
+            ),
+       
+        Container(
+             margin:EdgeInsets.all(2),
+             height:100,
+             width:100,
+             color:Colors.lightGreen
+         )
+          ]
+      )),
 
       )
     );
