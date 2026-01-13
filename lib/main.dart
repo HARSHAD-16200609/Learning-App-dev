@@ -32,23 +32,28 @@ icon:Icon(Icons.logout))
 
           ),
           body:Column (
-              children:[
-                Container(
-                  height:200,
-                  width:600,
-                  color: Colors.lightGreen,
 
+              crossAxisAlignment: CrossAxisAlignment.center,
+
+              children:[
+                Expanded(
+                    child:Container(
+
+                        color: Colors.lightGreen
+                    )
                 ),
-                Container(
-                  height:200,
-                  width:600,
-                  color: Colors.lightBlue
-                ),
-                Container(
-                  height:200,
-                  width:600,
-                  color: Colors.pink,
-                ),
+               Expanded(
+                   child:Container(
+
+                   color: Colors.lightBlue
+               )
+               ),
+               Expanded(   // makes the container take all the space left out
+                   flex:2,  // makes the widget n times grater than others like 2 or 3
+                  child: Container(
+                 color: Colors.pink,
+               )
+               ) ,
 
               ]
           )
