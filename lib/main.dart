@@ -19,7 +19,11 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
         debugShowCheckedModeBanner: false,
-        home: FirstPage()
+        home: FirstPage(),
+      routes: {
+          "/secondpage":(context) => secondPage(),
+        "/firstpage":(context) => FirstPage()
+      },
     );
   }
 }

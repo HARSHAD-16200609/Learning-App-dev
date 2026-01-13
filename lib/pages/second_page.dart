@@ -41,7 +41,7 @@ alignment: Alignment.bottomCenter,
             Container(
               child:ElevatedButton(
                 child: Text("Go to First Page"),
-                  onPressed:()=> Navigator.push(context, MaterialPageRoute(builder: (context) => FirstPage()))
+                  onPressed:()=> Navigator.pushNamed(context,"/firstpage")
             )
         ),
           ],

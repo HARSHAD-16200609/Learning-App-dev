@@ -44,15 +44,7 @@ class FirstPage
             ),
           ),
 
-          onPressed: () => Navigator.push(
-            context,
-            MaterialPageRoute(
-              builder:
-                  (
-                    context,
-                  ) => secondPage(),
-            ),
-          ),
+          onPressed: () => Navigator.pushNamed(context,"/secondpage"),
 
           // Navigation to second page
         ),
