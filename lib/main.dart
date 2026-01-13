@@ -7,9 +7,7 @@ void main() {
 
 class MyApp extends StatelessWidget {
   MyApp({super.key});
-String name  = "harshad";
-int age = 19;
-bool isBeginner = true;
+List names = ["Harshad","Vikrant","Suraj","Sumeet","Devesh","Omkar","Aryan","Siddharth","Aquibe","Anand"];
 
   // This widget is the root of your application.
   @override
@@ -53,34 +51,25 @@ icon:Icon(Icons.logout))
           //
           //     ]
           // )
-          body:ListView( // used because gives us the overflow scroll property unlike column
-            scrollDirection: Axis.horizontal,  // makes scroll horizontal
-            //   scrollDirection: Axis.vertical,     // makes scroll vertical default
-              children:[
-                    Container(
-                      height:300,
-                      width:300,
-                      color: Colors.lightGreen,
+          // body:ListView.builder(  // used to build dynamic info containers
+          //     itemCount:names.length,
+          //     itemBuilder: (context,index)=>
+          //     ListTile(  
+          //       title:Text(names[index])
+          //     ))
+        body:GridView.builder(
+          itemCount:64,
+            gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(crossAxisCount: 8),
+            itemBuilder:(context,index)=> Container(
+              margin:EdgeInsets.all(2),
 
-                    ),
-                    Container(
-                        height:300,
-                        width:300,
-
-                        color: Colors.lightBlue
-                    ),
-                    Container(
-
-                     height:300,
-                      width:300,
-
-                      color: Colors.pink,
-                    ),
-            ]
-          )
+              height:10,
+             width:10,
+             color:Colors.deepPurpleAccent
+            )
       ),
 
-
+      )
     );
   }
 }
