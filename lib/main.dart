@@ -31,33 +31,55 @@ icon:Icon(Icons.logout))
             ],
 
           ),
-          body:Column (
-
-              crossAxisAlignment: CrossAxisAlignment.center,
-
+          // body:Column (
+          //
+          //     crossAxisAlignment: CrossAxisAlignment.center,
+          //
+          //     children:[
+          //       Container(
+          //         height:300,
+          //         color: Colors.lightGreen,
+          //
+          //       ),
+          //       Container(
+          //           height:300,
+          //         color: Colors.lightBlue
+          //       ),
+          //       Container(
+          //         // 3rd box dosen't fit
+          //        height:300,
+          //         color: Colors.pink,
+          //       ),
+          //
+          //     ]
+          // )
+          body:ListView( // used because gives us the overflow scroll property unlike column
+            scrollDirection: Axis.horizontal,  // makes scroll horizontal
+            //   scrollDirection: Axis.vertical,     // makes scroll vertical default
               children:[
-                Expanded(
-                    child:Container(
+                    Container(
+                      height:300,
+                      width:300,
+                      color: Colors.lightGreen,
 
-                        color: Colors.lightGreen
-                    )
-                ),
-               Expanded(
-                   child:Container(
+                    ),
+                    Container(
+                        height:300,
+                        width:300,
 
-                   color: Colors.lightBlue
-               )
-               ),
-               Expanded(   // makes the container take all the space left out
-                   flex:2,  // makes the widget n times grater than others like 2 or 3
-                  child: Container(
-                 color: Colors.pink,
-               )
-               ) ,
+                        color: Colors.lightBlue
+                    ),
+                    Container(
 
-              ]
+                     height:300,
+                      width:300,
+
+                      color: Colors.pink,
+                    ),
+            ]
           )
       ),
+
 
     );
   }
