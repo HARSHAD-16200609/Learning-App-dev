@@ -9,6 +9,12 @@ class MyApp extends StatelessWidget {
   MyApp({super.key});
 List names = ["Harshad","Vikrant","Suraj","Sumeet","Devesh","Omkar","Aryan","Siddharth","Aquibe","Anand"];
 
+void displayUsers (){
+  for (var name in names) {
+    print(name);
+  }
+}
+
   // This widget is the root of your application.
   @override
   Widget build(BuildContext context) {
@@ -51,40 +57,40 @@ icon:Icon(Icons.logout))
           //
           //     ]
           // )
-          // body:ListView.builder(  // used to build dynamic info containers
-          //     itemCount:names.length,
-          //     itemBuilder: (context,index)=>
-          //     ListTile(  
-          //       title:Text(names[index])
-          //     ))
-        body:Center (
-            child : Stack(
-              // stacks container on top of each other
-              alignment: Alignment.center,
-          children:[
-            Container(
-              //big box
-              margin:EdgeInsets.all(2),
-              height:300,
-              width:300,
-              color:Colors.deepPurpleAccent
-          ),
-            //medium box
-            Container(
-                margin:EdgeInsets.all(2),
-                height:200,
-                width:200,
-                color:Colors.lightBlue
-            ),
-       
-        Container(
-             margin:EdgeInsets.all(2),
-             height:100,
-             width:100,
-             color:Colors.lightGreen
-         )
-          ]
-      )),
+
+        // examplle of nested childs
+        // body:Center (
+        //   child : GestureDetector(
+        //     child:Expanded(
+        //         child:Container(
+        //       color: Colors.blue[600],
+        //       height: 200,
+        //       child: Center(
+        //           child:Text(
+        //               "My name is Harshad",
+        //             textScaler: TextScaler.linear(2),
+        //           )),
+        //
+        //
+        //     ))
+        //   )
+        //    ),
+          body:Center (
+              child : GestureDetector(
+                onTap: () =>displayUsers(),
+                      child:Container(
+                        color: Colors.purple[600],
+                        height: 200,
+                        child: Center(
+                            child:Text(
+                              "My name is Harshad",
+                              textScaler: TextScaler.linear(2),
+                            )),
+
+
+                      )
+              )
+          )
 
       )
     );
