@@ -1,12 +1,39 @@
 import 'package:flutter/material.dart';
-import 'package:learningdart/pages/second_page.dart';
+import 'package:learningdart/pages/profile.dart';
+
+import 'package:learningdart/pages/settingsPage.dart';
+
+import 'HomePage.dart';
 
 class FirstPage
     extends
-        StatelessWidget {
-  const FirstPage({
+        StatefulWidget {
+   FirstPage({
     super.key,
   });
+
+  @override
+  State<FirstPage> createState() => _FirstPageState();
+}
+
+class _FirstPageState extends State<FirstPage> {
+   int _selectedindex = 0;
+
+  final List _pages
+  =[
+    //homepage
+    HomePage(),
+    //profile page
+    Profile(),
+    //settings page
+    settingsPage(),
+  ];
+
+  void navigateBottomBar(int index){
+    setState(() {
+      _selectedindex = index;
+    });
+  }
 
   @override
   Widget build(
@@ -19,7 +46,7 @@ class FirstPage
         ),
         centerTitle: true,
 backgroundColor: Colors.lightBlue,
-        
+
       ),
       drawer: Drawer(
         backgroundColor: Colors.cyanAccent[100],
@@ -30,6 +57,7 @@ backgroundColor: Colors.lightBlue,
    ListTile(
      leading: Icon(Icons.home,size:25),
      title:Text("H O M E"),
+       onTap:()=> Navigator.pushNamed(context,"/profilepage")
    ),
    ListTile(
      leading: Icon(Icons.settings,size:25),
@@ -51,14 +79,11 @@ backgroundColor: Colors.lightBlue,
 
 
         ),
-      body: Center(
-        child:Container(
-          child:Text("Welcome to Aurionix Solutions",
-              style: TextStyle(fontSize:25)
-        )
-      ),
-      ),
+      body: _pages[_selectedindex],
+
       bottomNavigationBar: BottomNavigationBar(
+        currentIndex: _selectedindex,
+        onTap: navigateBottomBar,
         items:[
       BottomNavigationBarItem(
           icon:Icon(Icons.home),
@@ -81,7 +106,7 @@ backgroundColor: Colors.lightBlue,
 
 
 
-    
+
     );
   }
 }
