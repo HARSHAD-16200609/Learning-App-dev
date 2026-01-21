@@ -19,8 +19,9 @@ class secondPage
 alignment: Alignment.bottomCenter,
           children: [
             Container(
+              padding: EdgeInsets.all(12),
               alignment: Alignment.center,
-              height: 200,
+              height: 300,
               width: 300,
 
               decoration: BoxDecoration(
@@ -30,17 +31,22 @@ alignment: Alignment.bottomCenter,
                 ),
               ),
               child: Text(
-                "I am the Second Page",
+                "Aurionix Solutions is a forward-thinking technology company."
+                    "We focus on innovation, scalability, and quality."
+                    "Our mission is to deliver future-ready digital solutions."
+              ,
                 textScaler: TextScaler.linear(
-                  2,
+                  1.5,
                 ),
                 selectionColor: Colors.cyan[300],
-              ),
-            ),
+              )
+        ),
+
 
             Container(
+              margin: EdgeInsets.only(top:6),
               child:ElevatedButton(
-                child: Text("Go to First Page"),
+                child: Text("Go to Home Page"),
                   onPressed:()=> Navigator.pushNamed(context,"/firstpage")
             )
         ),

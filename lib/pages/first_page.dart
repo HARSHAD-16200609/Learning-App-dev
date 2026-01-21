@@ -14,41 +14,74 @@ class FirstPage
   ) {
     return Scaffold(
       appBar: AppBar(
-        leading: Icon(
-          Icons.menu,
-        ),
         title: const Text(
           "First Page",
         ),
         centerTitle: true,
-        actions: [
-          IconButton(
-            icon: const Icon(
-              Icons.logout,
-            ),
-            onPressed: () {
-              print(
-                "Logout clicked",
-              );
-            },
+backgroundColor: Colors.lightBlue,
+        
+      ),
+      drawer: Drawer(
+        backgroundColor: Colors.cyanAccent[100],
+       child:Column(
+  children: [
+    DrawerHeader(child: Icon(Icons.favorite,size: 50,
+    ) ),
+   ListTile(
+     leading: Icon(Icons.home,size:25),
+     title:Text("H O M E"),
+   ),
+   ListTile(
+     leading: Icon(Icons.settings,size:25),
+     title:Text("S E T T I N G S"),
+       onTap:()=> Navigator.pushNamed(context,"/settingspage")
+   ),
+   ListTile(
+     leading: Icon(Icons.logout,size:25),
+     title:Text("L O G O U T"),
+   ),
+   ListTile(
+     leading: Icon(Icons.contact_mail,size:25,),
+     title:Text("A B O U T  U S"),
+     onTap:()=> Navigator.pushNamed(context,"/secondpage")
+   )
+  ],
+
+    ),
+
+
+        ),
+      body: Center(
+        child:Container(
+          child:Text("Welcome to Aurionix Solutions",
+              style: TextStyle(fontSize:25)
+        )
+      ),
+      ),
+      bottomNavigationBar: BottomNavigationBar(
+        items:[
+      BottomNavigationBarItem(
+          icon:Icon(Icons.home),
+          label:'Home',
+
+      ),
+          BottomNavigationBarItem(
+            icon:Icon(
+              Icons.person),
+              label:'Profile',
           ),
+          BottomNavigationBarItem(
+
+              icon:Icon(Icons.settings),
+              label:'settings'
+          )
+
         ],
       ),
 
-      body: Center(
-        child: ElevatedButton(
-          child: Text(
-            "Go to Second Page",
-            textScaler: TextScaler.linear(
-              2,
-            ),
-          ),
 
-          onPressed: () => Navigator.pushNamed(context,"/secondpage"),
 
-          // Navigation to second page
-        ),
-      ),
+    
     );
   }
 }
