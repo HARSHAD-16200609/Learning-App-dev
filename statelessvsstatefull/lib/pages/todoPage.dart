@@ -9,8 +9,15 @@ class todoPage extends StatefulWidget {
 
 class _todoPageState extends State<todoPage> {
    TextEditingController myController = TextEditingController();
+
+   String greetingmessage ="";
+
 void greetUser (){
-  print("Hello "+myController.text);
+  String username = myController.text;
+  setState(() {
+    greetingmessage = "Hello, "+username;
+  });
+
 }
 
 
@@ -20,26 +27,32 @@ void greetUser (){
 
   body:Center(
 
-    child:Column(
+    child:Padding(
+      padding: const EdgeInsets.all(8.0),
+      child: Column(
 
-      children: [
-      Container(
-        margin:EdgeInsets.only(top :250.0),
-        padding:EdgeInsets.all(10),
+      mainAxisAlignment: MainAxisAlignment.center,
+        children: [
 
-       child: TextField(
-          controller: myController,
+Text(greetingmessage),
+          TextField(
+            decoration: InputDecoration(
+              border: OutlineInputBorder(),
+              hintText: "Enter Your Name..."
+            ),
+           controller: myController,
 
-        ),
+         ) ,
+
+          ElevatedButton(
+            onPressed: () => greetUser(),
+            child:  Text("Submit"),
+          )
+
+
+
+        ],
       ),
-        ElevatedButton(
-          onPressed: () => greetUser(),
-          child: const Text("Submit"),
-        )
-
-
-
-      ],
     )
   )
     );
