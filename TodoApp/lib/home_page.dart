@@ -9,6 +9,53 @@ class home_page extends StatefulWidget {
 }
 
 class _home_pageState extends State<home_page> {
+
+  List todolist = [
+
+    ];
+  final TextEditingController _taskController = TextEditingController();
+
+  void checkboxChanged (index){
+    setState(() {
+      todolist[index][1] = !todolist[index][1];
+    });
+  }
+  void createNewTask() {
+    showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title:  Text("Add Task"),
+          content: TextField(
+            controller: _taskController,
+            decoration:  InputDecoration(
+              hintText: "Enter task name",
+              border: OutlineInputBorder(),
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.pop(context);
+              },
+              child:  Text("Cancel"),
+            ),
+            ElevatedButton(
+              onPressed: () {
+                setState(() {
+                  todolist.add([_taskController.text,false]);
+                });
+                Navigator.pop(context);
+              },
+              child:  Text("Save"),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+
   @override
   Widget build(BuildContext context) {
     return  Scaffold(
@@ -18,26 +65,26 @@ backgroundColor: Colors.yellow[300],
 title: Text("TODO APP 📝"),
         elevation: 0,
       ),
-      body: ListView(
-        padding: EdgeInsets.all(25),
+      body: Padding(
+        padding: const EdgeInsets.all(8.0),
+        child: ListView.builder(
 
-        children: [
-          TodoTile(taskname: 'Buy Groceries 🍅', isChecked: true,),
-          TodoTile(taskname: 'Do Homework 📚', isChecked: false,),
-          TodoTile(taskname: 'Study Flutter ❤️‍🔥', isChecked: true,),
-          TodoTile(taskname: 'Drink Whiskey 🍺', isChecked: false,),
-          TodoTile(taskname: 'Go to gym 💪', isChecked: true,),
-          TodoTile( taskname: ' Do Programming 🧑‍🏫', isChecked: false,),
-
-
-
-        ],
+          itemCount: todolist.length,
+          itemBuilder: (context,index){
+            return TodoTile(
+              taskname: todolist[index][0],
+              isChecked: todolist[index][1],
+              onChanged: (value) =>checkboxChanged(index) ,
+            );
+        },),
       ),
       floatingActionButton: FloatingActionButton(
-        onPressed: (){print("TODO added Sucessfully");},
+        shape:  CircleBorder(),
+        onPressed:createNewTask,
         child: Icon(Icons.add),
       ),
     );
   }
 }
+
 

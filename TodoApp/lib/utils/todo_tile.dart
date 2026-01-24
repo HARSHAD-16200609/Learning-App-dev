@@ -5,7 +5,7 @@ class TodoTile extends StatelessWidget {
  final bool isChecked;
 Function (bool?)? onChanged;
 
-   TodoTile({super.key, required this.taskname, required this.isChecked});
+   TodoTile({super.key, required this.taskname, required this.isChecked,required this.onChanged});
 
 
 
@@ -24,7 +24,7 @@ Function (bool?)? onChanged;
       ),
       child: Row(
         children: [
-          Checkbox(value: isChecked, onChanged: (value) {}),
+          Checkbox(value: isChecked, onChanged: onChanged),
           SizedBox(width: 20,),
           Text(taskname,style: TextStyle(fontSize: 20,decoration: isChecked ? TextDecoration.lineThrough : null)),
 
