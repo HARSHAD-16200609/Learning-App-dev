@@ -34,7 +34,7 @@ class _home_pageState extends State<home_page> {
             ),
           ),
           actions: [
-            TextButton(
+            ElevatedButton(
               onPressed: () {
                 Navigator.pop(context);
               },
@@ -45,6 +45,7 @@ class _home_pageState extends State<home_page> {
                 setState(() {
                   todolist.add([_taskController.text,false]);
                 });
+                _taskController.clear();
                 Navigator.pop(context);
               },
               child:  Text("Save"),
@@ -54,7 +55,11 @@ class _home_pageState extends State<home_page> {
       },
     );
   }
-
+void deleteTask (index){
+  setState(() {
+    todolist.removeAt(index);
+  });
+}
 
   @override
   Widget build(BuildContext context) {
@@ -72,9 +77,11 @@ title: Text("TODO APP 📝"),
           itemCount: todolist.length,
           itemBuilder: (context,index){
             return TodoTile(
+              key: ValueKey(todolist[index][0] + index.toString()),
               taskname: todolist[index][0],
               isChecked: todolist[index][1],
               onChanged: (value) =>checkboxChanged(index) ,
+              deleteToDo: (context) => deleteTask(index)
             );
         },),
       ),
