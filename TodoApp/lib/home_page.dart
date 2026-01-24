@@ -1,5 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_slidable/flutter_slidable.dart';
+import 'package:hive/hive.dart';
 import 'package:todoapp/utils/todo_tile.dart';
+
+import 'data/database.dart';
 
 class home_page extends StatefulWidget {
    home_page({super.key});
@@ -9,16 +13,29 @@ class home_page extends StatefulWidget {
 }
 
 class _home_pageState extends State<home_page> {
+final _myBox= Hive.box('mybox');
 
-  List todolist = [
+Database db = Database();
 
-    ];
   final TextEditingController _taskController = TextEditingController();
+
+  @override
+  void initState() {
+    super.initState();
+    // If this is the first time opening the app, create default data
+    if (_myBox.get('todolist') == null) {
+      db.createInitialData();
+    } else {
+      // Data already exists, load it
+      db.loadData();
+    }
+  }
 
   void checkboxChanged (index){
     setState(() {
-      todolist[index][1] = !todolist[index][1];
+      db.todolist[index][1] = !db.todolist[index][1];
     });
+    db.updateData();
   }
   void createNewTask() {
     showDialog(
@@ -43,8 +60,9 @@ class _home_pageState extends State<home_page> {
             ElevatedButton(
               onPressed: () {
                 setState(() {
-                  todolist.add([_taskController.text,false]);
+                  db.todolist.add([_taskController.text,false]);
                 });
+                db.updateData();
                 _taskController.clear();
                 Navigator.pop(context);
               },
@@ -57,8 +75,9 @@ class _home_pageState extends State<home_page> {
   }
 void deleteTask (index){
   setState(() {
-    todolist.removeAt(index);
+    db.todolist.removeAt(index);
   });
+  db.updateData();
 }
 
   @override
@@ -70,20 +89,21 @@ backgroundColor: Colors.yellow[300],
 title: Text("TODO APP 📝"),
         elevation: 0,
       ),
-      body: Padding(
-        padding: const EdgeInsets.all(8.0),
-        child: ListView.builder(
-
-          itemCount: todolist.length,
-          itemBuilder: (context,index){
-            return TodoTile(
-              key: ValueKey(todolist[index][0] + index.toString()),
-              taskname: todolist[index][0],
-              isChecked: todolist[index][1],
-              onChanged: (value) =>checkboxChanged(index) ,
-              deleteToDo: (context) => deleteTask(index)
-            );
-        },),
+      body: SlidableAutoCloseBehavior(
+        child: Padding(
+          padding: const EdgeInsets.all(8.0),
+          child: ListView.builder(
+            itemCount: db.todolist.length,
+            itemBuilder: (context,index){
+              return TodoTile(
+                key: ValueKey(db.todolist[index][0] + index.toString()),
+                taskname: db.todolist[index][0],
+                isChecked: db.todolist[index][1],
+                onChanged: (value) =>checkboxChanged(index) ,
+                deleteToDo: (context) => deleteTask(index)
+              );
+          },),
+        ),
       ),
       floatingActionButton: FloatingActionButton(
         shape:  CircleBorder(),
