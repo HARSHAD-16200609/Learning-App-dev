@@ -14,6 +14,9 @@ class intro_page extends StatelessWidget {
         color: Colors.grey[100],
         child: Column(
           children: [
+            SizedBox(
+              height: 100,
+            ),
             SvgPicture.asset(
               'assets/images/nike-4-logo-svgrepo-com.svg',
               width: double.infinity,

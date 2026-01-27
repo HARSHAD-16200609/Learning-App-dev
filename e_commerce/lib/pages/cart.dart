@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:e_commerce/models/cart_model.dart';
 
 class cart extends StatefulWidget {
   cart({super.key});
@@ -8,65 +9,24 @@ class cart extends StatefulWidget {
 }
 
 class _cartState extends State<cart> {
-
-  List<Map<String, dynamic>> cartItems = [
-    {
-      'name': 'Nike Air Max 270',
-      'price': 150.00,
-      'quantity': 1,
-      'image': '5daa00d9_afae_4125_a95c_fc71923b81c3.webp',
-      'size': '10',
-    },
-    {
-      'name': 'Nike Air Jordan',
-      'price': 160.00,
-      'quantity': 1,
-      'image': '447ce43b_9ffb_49ca_b1af_ba209877be22.webp',
-      'size': '9',
-    },
-    {
-      'name': 'Nike Zoom',
-      'price': 140.00,
-      'quantity': 2,
-      'image': 'b5bf7176_9aaa_4e63_8bcd_50f809fc1dab.webp',
-      'size': '11',
-    },
-  ];
+  final CartModel _cart = CartModel();
 
   void _incrementQuantity(int index) {
     setState(() {
-      cartItems[index]['quantity']++;
+      _cart.incrementQuantity(index);
     });
   }
 
   void _decrementQuantity(int index) {
     setState(() {
-      if (cartItems[index]['quantity'] > 1) {
-        cartItems[index]['quantity']--;
-      }
+      _cart.decrementQuantity(index);
     });
   }
 
   void _removeItem(int index) {
     setState(() {
-      cartItems.removeAt(index);
+      _cart.removeItem(index);
     });
-  }
-
-  double _calculateSubtotal() {
-    double subtotal = 0;
-    for (var item in cartItems) {
-      subtotal += item['price'] * item['quantity'];
-    }
-    return subtotal;
-  }
-
-  double _calculateTax() {
-    return _calculateSubtotal() * 0.08; // 8% tax
-  }
-
-  double _calculateTotal() {
-    return _calculateSubtotal() + _calculateTax();
   }
 
   @override
@@ -91,24 +51,109 @@ class _cartState extends State<cart> {
         ),
         centerTitle: true,
       ),
-      body: cartItems.isEmpty
+      body: _cart.items.isEmpty
           ? _buildEmptyCart()
-          : Column(
-        children: [
-          // Cart Items List
-          Expanded(
-            child: ListView.builder(
-              padding: EdgeInsets.all(16),
-              itemCount: cartItems.length,
-              itemBuilder: (context, index) {
-                return _buildCartItem(index);
-              },
-            ),
-          ),
+          : Stack(
+              children: [
+                // Scrollable Cart Items - goes under the floating sections
+                ListView.builder(
+                  padding: EdgeInsets.only(
+                    left: 16,
+                    right: 16,
+                    top: 16,
+                    bottom: 280, // Space for total + nav bar
+                  ),
+                  itemCount: _cart.items.length,
+                  itemBuilder: (context, index) {
+                    return _buildCartItem(index);
+                  },
+                ),
 
-          // Price Summary and Checkout
-          _buildCheckoutSection(),
-        ],
+                // Floating Total and Bottom Nav
+                Positioned(
+                  left: 0,
+                  right: 0,
+                  bottom: 0,
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      // Total Section
+                      _buildCheckoutSection(),
+
+                      // Bottom Navigation Bar
+                      _buildBottomNavBar(),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+    );
+  }
+
+  Widget _buildBottomNavBar() {
+    return SafeArea(
+      child: Container(
+        color: Colors.white,
+        padding: EdgeInsets.symmetric(horizontal: 100, vertical: 10),
+        child: Container(
+          padding: EdgeInsets.symmetric(horizontal: 8, vertical: 8),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(30),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.1),
+                blurRadius: 15,
+                offset: Offset(0, 5),
+              ),
+            ],
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              // Home/Shop Button (Inactive)
+              GestureDetector(
+                onTap: () => Navigator.pop(context),
+                child: Container(
+                  padding: EdgeInsets.all(8),
+                  child: Icon(
+                    Icons.home_outlined,
+                    color: Colors.grey[400],
+                    size: 20,
+                  ),
+                ),
+              ),
+
+              SizedBox(width: 8),
+
+              // Cart Button (Active)
+              Container(
+
+                padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(25),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Icon(Icons.shopping_bag, color: Colors.black, size: 20),
+                    SizedBox(width: 6),
+                    Text(
+                      'Cart',
+                      style: TextStyle(
+                        color: Colors.black,
+                        fontWeight: FontWeight.w600,
+                        fontSize: 14,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
       ),
     );
   }
@@ -166,7 +211,7 @@ class _cartState extends State<cart> {
   }
 
   Widget _buildCartItem(int index) {
-    final item = cartItems[index];
+    final item = _cart.items[index];
 
     return Container(
       margin: EdgeInsets.only(bottom: 16),
@@ -196,7 +241,7 @@ class _cartState extends State<cart> {
               child: ClipRRect(
                 borderRadius: BorderRadius.circular(12),
                 child: Image.asset(
-                  'assets/images/${item['image']}',
+                  'assets/images/${item.image}',
                   fit: BoxFit.cover,
                 ),
               ),
@@ -209,7 +254,7 @@ class _cartState extends State<cart> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    item['name'],
+                    item.name,
                     style: TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.bold,
@@ -218,7 +263,7 @@ class _cartState extends State<cart> {
                   ),
                   SizedBox(height: 4),
                   Text(
-                    'Size: ${item['size']}',
+                    'Size: ${item.size}',
                     style: TextStyle(
                       fontSize: 14,
                       color: Colors.grey[600],
@@ -226,7 +271,7 @@ class _cartState extends State<cart> {
                   ),
                   SizedBox(height: 8),
                   Text(
-                    '\$${item['price'].toStringAsFixed(2)}',
+                    '\$${item.price.toStringAsFixed(2)}',
                     style: TextStyle(
                       fontSize: 18,
                       fontWeight: FontWeight.bold,
@@ -254,7 +299,7 @@ class _cartState extends State<cart> {
                             Container(
                               padding: EdgeInsets.symmetric(horizontal: 12),
                               child: Text(
-                                '${item['quantity']}',
+                                '${item.quantity}',
                                 style: TextStyle(
                                   fontSize: 16,
                                   fontWeight: FontWeight.bold,
@@ -308,11 +353,11 @@ class _cartState extends State<cart> {
           mainAxisSize: MainAxisSize.min,
           children: [
             // Subtotal
-            _buildPriceRow('Subtotal', _calculateSubtotal()),
+            _buildPriceRow('Subtotal', _cart.subtotal),
             SizedBox(height: 12),
 
             // Tax
-            _buildPriceRow('Tax (8%)', _calculateTax()),
+            _buildPriceRow('Tax (8%)', _cart.tax),
             SizedBox(height: 12),
 
             Divider(thickness: 1.5),
@@ -331,7 +376,7 @@ class _cartState extends State<cart> {
                   ),
                 ),
                 Text(
-                  '\$${_calculateTotal().toStringAsFixed(2)}',
+                  '\$${_cart.total.toStringAsFixed(2)}',
                   style: TextStyle(
                     fontSize: 24,
                     fontWeight: FontWeight.bold,
