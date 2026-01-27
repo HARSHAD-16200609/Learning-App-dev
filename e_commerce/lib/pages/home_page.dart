@@ -1,5 +1,5 @@
 import 'dart:ui';
-
+import 'package:e_commerce/pages/cart.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 
@@ -32,15 +32,55 @@ class _home_pageState extends State<home_page> {
         backgroundColor: Colors.grey[100],
         title: Row(
           mainAxisSize: MainAxisSize.min,
-          children: [ SvgPicture.asset(
-            'assets/images/nike-4-logo-svgrepo-com.svg',
-            width: 35,
-            height: 35,
-          ),
-            SizedBox(width: 8),
+          children: [
             Text("N I K E",
-              style: TextStyle(fontFamily: "times new roman"),
+              style: TextStyle(fontFamily: "times new roman",fontWeight: FontWeight.bold),
             ),
+            SizedBox(
+              width:200,
+            ),
+            Stack(
+              clipBehavior: Clip.none,
+              children: [
+                IconButton(
+                  icon: const Icon(
+                    Icons.shopping_cart,
+                    size: 30,
+                    color: Colors.grey,
+                  ),
+                  onPressed: () {
+                    Navigator.pushNamed(context, '/cart');
+                  },
+                ),
+
+                // Badge
+                Positioned(
+                  right: 2,
+                  top: 2,
+                  child: Container(
+                    padding:  EdgeInsets.all(4),
+                    decoration:  BoxDecoration(
+                      color: Colors.red,
+                      shape: BoxShape.circle,
+                    ),
+                    constraints:  BoxConstraints(
+                      minWidth: 18,
+                      minHeight: 18,
+                    ),
+                    child:  Text(
+                      '1',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 12,
+                        fontWeight: FontWeight.bold,
+                      ),
+                      textAlign: TextAlign.center,
+                    ),
+                  ),
+                ),
+              ],
+            )
+
           ],
         ),
       ),
@@ -59,15 +99,11 @@ class _home_pageState extends State<home_page> {
                 ),
                 ListTile(
                   leading:Icon(Icons.home,size:25),
-                  title: Text("H O M E",style: TextStyle(fontFamily: "times new roman")),
-                ),
-                ListTile(
-                  leading:Icon(Icons.shopping_cart,size:25),
-                  title: Text("C A R T",style: TextStyle(fontFamily: "times new roman")),
+                  title: Text("H O M E",style: TextStyle(fontFamily: "times new roman",fontWeight: FontWeight.bold)),
                 ),
                 ListTile(
                   leading:Icon(Icons.info,size:25),
-                  title: Text("A B O U T ",style: TextStyle(fontFamily: "times new roman")),
+                  title: Text("A B O U T ",style: TextStyle(fontFamily: "times new roman",fontWeight: FontWeight.bold)),
                 )
               ]
             ),
@@ -113,3 +149,5 @@ class _home_pageState extends State<home_page> {
     );
   }
 }
+
+

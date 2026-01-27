@@ -34,30 +34,31 @@ class intro_page extends StatelessWidget {
             SizedBox(
               width: 200,
               height: 50,
-              child: ElevatedButton(
-                  onPressed: () => Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder:
-                          (
-                          context,
-                          ) => home_page(),
+              child: Padding(
+                padding:  EdgeInsets.only(left: 22.0,right: 22.0),
+                child: ElevatedButton(
+                    onPressed: () => Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder:
+                            (
+                            context,
+                            ) => home_page(),
+                      ),
                     ),
-                  ),
 
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.black,
-                    foregroundColor: Colors.white,
-                  ),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.black,
+                      foregroundColor: Colors.white,
+                    ),
 
-                child:Text("Shop Now",style: TextStyle(fontFamily: "times new roman",fontSize: 15,color: Colors.white,fontWeight: FontWeight.bold),)
+                  child:Text("Shop Now",style: TextStyle(fontFamily: "times new roman",fontSize: 15,color: Colors.white,fontWeight: FontWeight.bold),)
+                ),
               ),
             )
           ],
         ),
       ),
     );
-
-
   }
 }
