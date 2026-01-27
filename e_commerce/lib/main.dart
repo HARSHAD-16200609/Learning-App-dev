@@ -1,4 +1,5 @@
 import 'package:e_commerce/pages/home_page.dart';
+import 'package:e_commerce/pages/intro_page.dart';
 import 'package:flutter/material.dart';
 
 void main() {
@@ -14,7 +15,7 @@ class MyApp extends StatelessWidget {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
 
-      home:home_page(),
+      home:intro_page(),
 
       );
   }

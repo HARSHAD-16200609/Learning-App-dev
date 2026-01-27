@@ -27,14 +27,25 @@ class _home_pageState extends State<home_page> {
   @override
   Widget build(BuildContext context) {
     return  Scaffold(
+      backgroundColor: Colors.grey[100],
       appBar: AppBar(
-        backgroundColor: Colors.white,
-        title: Text("N I K  E",
-          style: TextStyle(fontFamily: "times new roman"),
+        backgroundColor: Colors.grey[100],
+        title: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [ SvgPicture.asset(
+            'assets/images/nike-4-logo-svgrepo-com.svg',
+            width: 35,
+            height: 35,
+          ),
+            SizedBox(width: 8),
+            Text("N I K E",
+              style: TextStyle(fontFamily: "times new roman"),
+            ),
+          ],
         ),
       ),
       drawer: Drawer(
-        backgroundColor: Colors.white,
+        backgroundColor: Colors.grey[100],
         child:Center(
           child: Padding(
             padding: const EdgeInsets.all(64.0),
@@ -42,13 +53,21 @@ class _home_pageState extends State<home_page> {
               mainAxisAlignment: MainAxisAlignment.start,
               children:[
                 SvgPicture.asset(
-                  'assets/nike.svg',
+                  'assets/images/nike-4-logo-svgrepo-com.svg',
                   width: 160,
                   height: 160,
                 ),
                 ListTile(
                   leading:Icon(Icons.home,size:25),
                   title: Text("H O M E",style: TextStyle(fontFamily: "times new roman")),
+                ),
+                ListTile(
+                  leading:Icon(Icons.shopping_cart,size:25),
+                  title: Text("C A R T",style: TextStyle(fontFamily: "times new roman")),
+                ),
+                ListTile(
+                  leading:Icon(Icons.info,size:25),
+                  title: Text("A B O U T ",style: TextStyle(fontFamily: "times new roman")),
                 )
               ]
             ),
@@ -72,6 +91,7 @@ class _home_pageState extends State<home_page> {
                 return Container(
                   margin: EdgeInsets.all(20),
                   decoration: BoxDecoration(
+                    color: Colors.grey[100],
                     borderRadius: BorderRadius.circular(20),
                   ),
                   child: ClipRRect(
