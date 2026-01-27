@@ -1,13 +1,17 @@
+import 'dart:io';
+import 'package:image_picker/image_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../providers/expense_provider.dart';
 import '../models/friend.dart';
+import '../models/transaction.dart';
 import '../widgets/balance_card.dart';
 import '../widgets/quick_actions.dart';
 import '../widgets/friend_tile.dart';
-import '../widgets/group_card.dart';
+import '../widgets/transaction_tile.dart';
 import 'friend_detail_screen.dart';
 import 'contact_picker_screen.dart';
+import 'settings_screen.dart';
 
 class HomeScreen extends StatelessWidget {
   const HomeScreen({super.key});
@@ -51,8 +55,12 @@ class HomeScreen extends StatelessWidget {
             _buildRecentFriendsSection(context, isDark, expenseProvider),
             const SizedBox(height: 28),
 
-            // Groups Section
-            _buildGroupsSection(context, isDark, expenseProvider),
+            // Groups Section - REMOVED
+            // _buildGroupsSection(context, isDark, expenseProvider),
+            // const SizedBox(height: 28),
+
+            // Recent Transactions Section
+            _buildRecentTransactions(context, isDark, expenseProvider),
             const SizedBox(height: 100), // Bottom padding for nav bar
           ],
         ),
@@ -60,30 +68,60 @@ class HomeScreen extends StatelessWidget {
     );
   }
 
+  // ... (Header, Friends, Groups sections remain unchanged) ...
   Widget _buildHeader(
       BuildContext context, bool isDark, ExpenseProvider provider) {
+    
+    // Helper to determine image provider
+    ImageProvider getImageProvider() {
+      if (provider.userAvatar.startsWith('http')) {
+        return NetworkImage(provider.userAvatar);
+      } else {
+        return FileImage(File(provider.userAvatar));
+      }
+    }
+
     return Padding(
       padding: const EdgeInsets.fromLTRB(20, 16, 20, 0),
       child: Row(
         children: [
-          // Avatar
-          Container(
-            width: 48,
-            height: 48,
-            decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              border: Border.all(
-                color: isDark ? Colors.white24 : Colors.grey[300]!,
-                width: 2,
-              ),
-              image: DecorationImage(
-                image: NetworkImage(provider.userAvatar),
-                fit: BoxFit.cover,
-              ),
+          // Editable Avatar
+          GestureDetector(
+            onTap: () => _pickProfileImage(context, provider),
+            child: Stack(
+              children: [
+                Container(
+                  width: 48,
+                  height: 48,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    border: Border.all(
+                      color: isDark ? Colors.white24 : Colors.grey[300]!,
+                      width: 2,
+                    ),
+                    image: DecorationImage(
+                      image: getImageProvider(),
+                      fit: BoxFit.cover,
+                    ),
+                  ),
+                ),
+                Positioned(
+                  bottom: 0,
+                  right: 0,
+                  child: Container(
+                    padding: const EdgeInsets.all(2),
+                    decoration: BoxDecoration(
+                      color: Theme.of(context).primaryColor,
+                      shape: BoxShape.circle,
+                      border: Border.all(color: Theme.of(context).scaffoldBackgroundColor, width: 1.5),
+                    ),
+                    child: const Icon(Icons.edit, size: 10, color: Colors.white),
+                  ),
+                ),
+              ],
             ),
           ),
           const SizedBox(width: 12),
-          // Welcome Text
           Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -106,27 +144,35 @@ class HomeScreen extends StatelessWidget {
             ],
           ),
           const Spacer(),
-          // Notification Button
-          Container(
-            width: 44,
-            height: 44,
-            decoration: BoxDecoration(
-              color: isDark ? const Color(0xFF1E293B) : Colors.white,
-              borderRadius: BorderRadius.circular(12),
-              boxShadow: isDark
-                  ? null
-                  : [
-                      BoxShadow(
-                        color: Colors.black.withValues(alpha: 0.05),
-                        blurRadius: 10,
-                        offset: const Offset(0, 2),
-                      ),
-                    ],
-            ),
-            child: Icon(
-              Icons.notifications_outlined,
-              color: isDark ? Colors.white : const Color(0xFF1E293B),
-              size: 24,
+          // Settings Button (Replaces Notification)
+          GestureDetector(
+            onTap: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => const SettingsScreen()),
+              );
+            },
+            child: Container(
+              width: 44,
+              height: 44,
+              decoration: BoxDecoration(
+                color: isDark ? const Color(0xFF1E293B) : Colors.white,
+                borderRadius: BorderRadius.circular(12),
+                boxShadow: isDark
+                    ? null
+                    : [
+                        BoxShadow(
+                          color: Colors.black.withValues(alpha: 0.05),
+                          blurRadius: 10,
+                          offset: const Offset(0, 2),
+                        ),
+                      ],
+              ),
+              child: Icon(
+                Icons.settings_outlined,
+                color: isDark ? Colors.white : const Color(0xFF1E293B),
+                size: 24,
+              ),
             ),
           ),
         ],
@@ -134,8 +180,23 @@ class HomeScreen extends StatelessWidget {
     );
   }
 
+  Future<void> _pickProfileImage(BuildContext context, ExpenseProvider provider) async {
+    final ImagePicker picker = ImagePicker();
+    try {
+      final XFile? image = await picker.pickImage(source: ImageSource.gallery);
+      if (image != null) {
+        provider.updateUserProfile(provider.userName, image.path);
+      }
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Failed to pick image: $e')),
+      );
+    }
+  }
+
   Widget _buildRecentFriendsSection(
       BuildContext context, bool isDark, ExpenseProvider provider) {
+      // ... Copy existing _buildRecentFriendsSection implementation ...
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -154,7 +215,6 @@ class HomeScreen extends StatelessWidget {
               ),
               Row(
                 children: [
-                  // Add from Contacts Button
                   GestureDetector(
                     onTap: () => _addFromContacts(context),
                     child: Container(
@@ -186,17 +246,7 @@ class HomeScreen extends StatelessWidget {
                       ),
                     ),
                   ),
-                  TextButton(
-                    onPressed: () {},
-                    child: Text(
-                      'See All',
-                      style: TextStyle(
-                        color: Theme.of(context).colorScheme.primary,
-                        fontSize: 14,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                  ),
+
                 ],
               ),
             ],
@@ -283,7 +333,9 @@ class HomeScreen extends StatelessWidget {
     }
   }
 
-  Widget _buildGroupsSection(
+
+
+  Widget _buildRecentTransactions(
       BuildContext context, bool isDark, ExpenseProvider provider) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -294,7 +346,7 @@ class HomeScreen extends StatelessWidget {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Text(
-                'Groups',
+                'Recent Transactions',
                 style: TextStyle(
                   color: isDark ? Colors.white : const Color(0xFF1E293B),
                   fontSize: 18,
@@ -304,7 +356,7 @@ class HomeScreen extends StatelessWidget {
               TextButton(
                 onPressed: () {},
                 child: Text(
-                  'View Groups',
+                  'See All',
                   style: TextStyle(
                     color: Theme.of(context).colorScheme.primary,
                     fontSize: 14,
@@ -316,23 +368,27 @@ class HomeScreen extends StatelessWidget {
           ),
         ),
         const SizedBox(height: 12),
-        SizedBox(
-          height: 130,
-          child: ListView.builder(
-            scrollDirection: Axis.horizontal,
-            padding: const EdgeInsets.symmetric(horizontal: 16),
-            itemCount: provider.groups.length,
-            itemBuilder: (context, index) {
-              return Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 4),
-                child: GroupCard(
-                  group: provider.groups[index],
-                  isDark: isDark,
+        if (provider.transactions.isEmpty)
+          Padding(
+            padding: const EdgeInsets.all(20),
+            child: Center(
+              child: Text(
+                'No recent transactions',
+                style: TextStyle(
+                  color: isDark ? Colors.grey[400] : Colors.grey[600],
                 ),
-              );
-            },
-          ),
-        ),
+              ),
+            ),
+          )
+        else
+          ...provider.transactions.take(5).map((transaction) => Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 4),
+                child: TransactionTile(
+                  transaction: transaction,
+                  isDark: isDark,
+                  showAvatar: true,
+                ),
+              )),
       ],
     );
   }

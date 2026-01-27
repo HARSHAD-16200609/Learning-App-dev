@@ -1,5 +1,7 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import '../providers/expense_provider.dart';
 import '../providers/theme_provider.dart';
 
 class SettingsScreen extends StatelessWidget {
@@ -10,31 +12,43 @@ class SettingsScreen extends StatelessWidget {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final themeProvider = Provider.of<ThemeProvider>(context);
 
-    return SafeArea(
-      child: SingleChildScrollView(
-        padding: const EdgeInsets.all(20),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              'Settings',
-              style: TextStyle(
-                color: isDark ? Colors.white : const Color(0xFF1E293B),
-                fontSize: 28,
-                fontWeight: FontWeight.w700,
+    return Scaffold(
+      backgroundColor: isDark ? const Color(0xFF0F172A) : const Color(0xFFF8FAFC),
+      appBar: AppBar(
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+        leading: IconButton(
+          icon: Icon(Icons.arrow_back, color: isDark ? Colors.white : Colors.black),
+          onPressed: () => {Navigator.of(context).pop()},
+        ),
+         title: Text(
+          'Settings',
+          style: TextStyle(
+            color: isDark ? Colors.white : const Color(0xFF1E293B),
+            fontSize: 20,
+            fontWeight: FontWeight.w600,
+          ),
+        ),
+        centerTitle: true,
+      ),
+      body: SafeArea(
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.all(20),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Removed custom "Settings" title since we added AppBar
+              // const SizedBox(height: 32), 
+              
+              // Profile Section
+              _buildSection(
+                context,
+                'Profile',
+                [
+                  _buildProfileItem(context, isDark),
+                ],
+                isDark,
               ),
-            ),
-            const SizedBox(height: 32),
-
-            // Profile Section
-            _buildSection(
-              context,
-              'Profile',
-              [
-                _buildProfileItem(context, isDark),
-              ],
-              isDark,
-            ),
             const SizedBox(height: 24),
 
             // Appearance Section
@@ -95,12 +109,12 @@ class SettingsScreen extends StatelessWidget {
               context,
               'General',
               [
-                _buildSettingItem(
+                  _buildSettingItem(
                   context,
                   Icons.attach_money_rounded,
                   'Currency',
                   isDark,
-                  subtitle: 'USD (\$)',
+                  subtitle: 'INR (₹)',
                   onTap: () {},
                 ),
                 _buildSettingItem(
@@ -179,7 +193,7 @@ class SettingsScreen extends StatelessWidget {
           ],
         ),
       ),
-    );
+    ));
   }
 
   Widget _buildSection(BuildContext context, String title,
@@ -224,53 +238,97 @@ class SettingsScreen extends StatelessWidget {
   }
 
   Widget _buildProfileItem(BuildContext context, bool isDark) {
-    return Padding(
-      padding: const EdgeInsets.all(16),
-      child: Row(
-        children: [
-          Container(
-            width: 56,
-            height: 56,
-            decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              border: Border.all(
-                color:
-                    Theme.of(context).colorScheme.primary.withValues(alpha: 0.3),
-                width: 2,
-              ),
-              image: const DecorationImage(
-                image: NetworkImage('https://i.pravatar.cc/150?img=8'),
-                fit: BoxFit.cover,
+    final provider = Provider.of<ExpenseProvider>(context);
+
+    // Helper to determine image provider
+    ImageProvider getImageProvider() {
+      if (provider.userAvatar.startsWith('http')) {
+        return NetworkImage(provider.userAvatar);
+      } else {
+        return FileImage(File(provider.userAvatar));
+      }
+    }
+
+    return InkWell(
+      onTap: () => _editProfileDialog(context, provider),
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Row(
+          children: [
+            Container(
+              width: 56,
+              height: 56,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                border: Border.all(
+                  color:
+                      Theme.of(context).colorScheme.primary.withValues(alpha: 0.3),
+                  width: 2,
+                ),
+                image: DecorationImage(
+                  image: getImageProvider(),
+                  fit: BoxFit.cover,
+                ),
               ),
             ),
-          ),
-          const SizedBox(width: 16),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  'Alex Rivera',
-                  style: TextStyle(
-                    color: isDark ? Colors.white : const Color(0xFF1E293B),
-                    fontSize: 16,
-                    fontWeight: FontWeight.w600,
+            const SizedBox(width: 16),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    provider.userName,
+                    style: TextStyle(
+                      color: isDark ? Colors.white : const Color(0xFF1E293B),
+                      fontSize: 16,
+                      fontWeight: FontWeight.w600,
+                    ),
                   ),
-                ),
-                const SizedBox(height: 2),
-                Text(
-                  'alex.rivera@email.com',
-                  style: TextStyle(
-                    color: isDark ? Colors.grey[400] : Colors.grey[600],
-                    fontSize: 13,
+                  const SizedBox(height: 2),
+                  Text(
+                    'Tap to edit username',
+                    style: TextStyle(
+                      color: isDark ? Colors.grey[400] : Colors.grey[600],
+                      fontSize: 13,
+                    ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
+            Icon(
+              Icons.edit_rounded,
+              color: isDark ? Colors.grey[600] : Colors.grey[400],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  void _editProfileDialog(BuildContext context, ExpenseProvider provider) {
+    final nameController = TextEditingController(text: provider.userName);
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Edit Username'),
+        content: TextField(
+          controller: nameController,
+          decoration: const InputDecoration(labelText: 'Username'),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Cancel'),
           ),
-          Icon(
-            Icons.chevron_right_rounded,
-            color: isDark ? Colors.grey[600] : Colors.grey[400],
+          ElevatedButton(
+            onPressed: () {
+              final newName = nameController.text.trim();
+              if (newName.isNotEmpty) {
+                provider.updateUserProfile(newName, null);
+                Navigator.pop(context);
+              }
+            },
+            child: const Text('Save'),
           ),
         ],
       ),

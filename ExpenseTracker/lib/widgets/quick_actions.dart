@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../screens/ocr_screen.dart';
 
 class QuickActions extends StatelessWidget {
   const QuickActions({super.key});
@@ -16,6 +17,18 @@ class QuickActions extends StatelessWidget {
           'Add Bill',
           isDark,
           onTap: () {},
+        ),
+        _buildActionButton(
+          context,
+          Icons.document_scanner_rounded, // OCR Icon
+          'Scan',
+          isDark,
+          onTap: () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(builder: (context) => const OCRScreen()),
+            );
+          },
         ),
         _buildActionButton(
           context,
@@ -42,10 +55,11 @@ class QuickActions extends StatelessWidget {
     bool isDark, {
     required VoidCallback onTap,
   }) {
+    // ... existing implementation
     return GestureDetector(
       onTap: onTap,
       child: Container(
-        width: 90,
+        width: 80, // Reduced width to fit 4 items
         padding: const EdgeInsets.symmetric(vertical: 16),
         decoration: BoxDecoration(
           color: isDark ? const Color(0xFF1E293B) : Colors.white,
@@ -92,6 +106,8 @@ class QuickActions extends StatelessWidget {
                 fontSize: 13,
                 fontWeight: FontWeight.w600,
               ),
+              textAlign: TextAlign.center,
+              overflow: TextOverflow.ellipsis,
             ),
           ],
         ),

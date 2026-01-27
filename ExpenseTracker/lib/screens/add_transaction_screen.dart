@@ -1,28 +1,83 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:uuid/uuid.dart';
 import '../providers/expense_provider.dart';
 import '../models/friend.dart';
+import '../models/transaction.dart' as model;
+import 'contact_picker_screen.dart';
 
 class AddTransactionScreen extends StatefulWidget {
-  const AddTransactionScreen({super.key});
+  final double? initialAmount;
+  final String? initialDescription;
+  final DateTime? initialDate;
+  final String? initialFriendId;
+  final bool? initialPaidByMe;
+
+  const AddTransactionScreen({
+    super.key,
+    this.initialAmount,
+    this.initialDescription,
+    this.initialDate,
+    this.initialFriendId,
+    this.initialPaidByMe,
+  });
 
   @override
   State<AddTransactionScreen> createState() => _AddTransactionScreenState();
 }
 
 class _AddTransactionScreenState extends State<AddTransactionScreen> {
-  final TextEditingController _amountController =
-      TextEditingController(text: '48.00');
-  final TextEditingController _descriptionController = TextEditingController();
-  String? _selectedFriendId;
+  late TextEditingController _amountController;
+  late TextEditingController _descriptionController;
+  
+  // Multi-select support
+  final Set<String> _selectedFriendIds = {};
+  
+  // Custom Split support
+  bool _isEqualSplit = true;
+  final Map<String, TextEditingController> _splitControllers = {};
+
   bool _iPaid = true;
   DateTime _selectedDate = DateTime.now();
+  final _uuid = const Uuid();
+
+  @override
+  void initState() {
+    super.initState();
+    _amountController = TextEditingController(
+        text: widget.initialAmount?.toStringAsFixed(2) ?? '0.00');
+    _descriptionController =
+        TextEditingController(text: widget.initialDescription ?? '');
+    
+    if (widget.initialFriendId != null) {
+      _selectedFriendIds.add(widget.initialFriendId!);
+    }
+    
+    _iPaid = widget.initialPaidByMe ?? true;
+    if (widget.initialDate != null) {
+      _selectedDate = widget.initialDate!;
+    }
+    
+    _amountController.addListener(_updateSplitAmounts);
+  }
 
   @override
   void dispose() {
+    _amountController.removeListener(_updateSplitAmounts);
     _amountController.dispose();
     _descriptionController.dispose();
+    for (var controller in _splitControllers.values) {
+      controller.dispose();
+    }
     super.dispose();
+  }
+
+  void _updateSplitAmounts() {
+    if (_isEqualSplit && _selectedFriendIds.isNotEmpty) {
+       // Logic handled in build or save usually, 
+       // but here we might want to update UI if we showed calculated split.
+       // For now, no-op, we calculate on save or render.
+    }
   }
 
   @override
@@ -53,19 +108,6 @@ class _AddTransactionScreenState extends State<AddTransactionScreen> {
           ),
         ),
         centerTitle: true,
-        actions: [
-          TextButton(
-            onPressed: () {},
-            child: Text(
-              'Help',
-              style: TextStyle(
-                color: primaryColor,
-                fontSize: 15,
-                fontWeight: FontWeight.w600,
-              ),
-            ),
-          ),
-        ],
       ),
       body: Column(
         children: [
@@ -76,7 +118,8 @@ class _AddTransactionScreenState extends State<AddTransactionScreen> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   // Search Friends
-                  Container(
+                  // (Simplified for brevity, same as before)
+                   Container(
                     height: 52,
                     decoration: BoxDecoration(
                       color: isDark ? const Color(0xFF1E293B) : Colors.white,
@@ -122,28 +165,106 @@ class _AddTransactionScreenState extends State<AddTransactionScreen> {
                     height: 90,
                     child: ListView.builder(
                       scrollDirection: Axis.horizontal,
-                      itemCount: expenseProvider.friends.length + 1,
+                      // +2 for 'Me' (start) and 'Add' (end)
+                      itemCount: expenseProvider.friends.length + 2,
                       itemBuilder: (context, index) {
+                        // 1. "Me" Option (Index 0)
                         if (index == 0) {
-                          // Current user (Alex)
                           return _buildFriendAvatar(
                             context,
-                            'Alex',
+                            'Me',
                             expenseProvider.userAvatar,
-                            isSelected: _selectedFriendId == null,
-                            onTap: () => setState(() => _selectedFriendId = null),
+                            isSelected: _selectedFriendIds.isEmpty,
+                            onTap: () {
+                               setState(() {
+                                 _selectedFriendIds.clear();
+                                 for (var c in _splitControllers.values) c.dispose();
+                                 _splitControllers.clear();
+                               });
+                            },
                             isDark: isDark,
                             showBorder: true,
                           );
                         }
+
+                        // 2. "Add Friend" Option (Last Index)
+                        if (index == expenseProvider.friends.length + 1) {
+                          return Padding(
+                            padding: const EdgeInsets.only(right: 16),
+                            child: Column(
+                              children: [
+                                GestureDetector(
+                                  onTap: () async {
+                                    final result = await Navigator.push<dynamic>(
+                                      context,
+                                      MaterialPageRoute(
+                                        builder: (context) => const ContactPickerScreen(multiSelect: true),
+                                      ),
+                                    );
+                                    if (result != null && result is List<Friend>) {
+                                      expenseProvider.addFriendsFromContacts(result);
+                                      // Add newly picked friends to selection
+                                      setState(() {
+                                        for (var f in result) {
+                                          if (!_selectedFriendIds.contains(f.id)) {
+                                            _selectedFriendIds.add(f.id);
+                                            _splitControllers[f.id] = TextEditingController();
+                                          }
+                                        }
+                                      });
+                                    }
+                                  },
+                                  child: Container(
+                                    width: 56,
+                                    height: 56,
+                                    decoration: BoxDecoration(
+                                      shape: BoxShape.circle,
+                                      border: Border.all(
+                                        color: isDark ? Colors.grey[700]! : Colors.grey[300]!,
+                                        width: 1,
+                                      ),
+                                      color: isDark ? Colors.white10 : Colors.grey[100],
+                                    ),
+                                    child: Icon(
+                                      Icons.add_rounded,
+                                      color: isDark ? Colors.white : Colors.black,
+                                    ),
+                                  ),
+                                ),
+                                const SizedBox(height: 8),
+                                Text(
+                                  'Add',
+                                  style: TextStyle(
+                                    color: isDark ? Colors.grey[400] : Colors.grey[600],
+                                    fontSize: 13,
+                                    fontWeight: FontWeight.w500,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          );
+                        }
+
+                        // 3. Friend List Options (Index 1..N)
                         final friend = expenseProvider.friends[index - 1];
+                        final isSelected = _selectedFriendIds.contains(friend.id);
                         return _buildFriendAvatar(
                           context,
                           friend.name.split(' ').first,
                           friend.avatarUrl,
-                          isSelected: _selectedFriendId == friend.id,
-                          onTap: () =>
-                              setState(() => _selectedFriendId = friend.id),
+                          isSelected: isSelected,
+                          onTap: () {
+                            setState(() {
+                              if (isSelected) {
+                                _selectedFriendIds.remove(friend.id);
+                                _splitControllers[friend.id]?.dispose();
+                                _splitControllers.remove(friend.id);
+                              } else {
+                                _selectedFriendIds.add(friend.id);
+                                _splitControllers[friend.id] = TextEditingController();
+                              }
+                            });
+                          },
                           isDark: isDark,
                         );
                       },
@@ -170,7 +291,7 @@ class _AddTransactionScreenState extends State<AddTransactionScreen> {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(
-                              '\$',
+                              '\₹',
                               style: TextStyle(
                                 color: primaryColor,
                                 fontSize: 32,
@@ -203,6 +324,176 @@ class _AddTransactionScreenState extends State<AddTransactionScreen> {
                     ),
                   ),
                   const SizedBox(height: 32),
+                  
+                  // Split Configuration (Only if multiple friends selected)
+                  if (_selectedFriendIds.isNotEmpty) ...[
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text(
+                          'SPLIT METHOD',
+                          style: TextStyle(
+                            color: isDark ? Colors.grey[500] : Colors.grey[600],
+                            fontSize: 12,
+                            fontWeight: FontWeight.w600,
+                            letterSpacing: 1,
+                          ),
+                        ),
+                        // Toggle
+                        Container(
+                          height: 36,
+                          decoration: BoxDecoration(
+                            color: isDark ? const Color(0xFF1E293B) : Colors.grey[200],
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                          child: Row(
+                            children: [
+                              GestureDetector(
+                                onTap: () => setState(() => _isEqualSplit = true),
+                                child: Container(
+                                  padding: const EdgeInsets.symmetric(horizontal: 12),
+                                  margin: const EdgeInsets.all(2),
+                                  decoration: BoxDecoration(
+                                    color: _isEqualSplit ? primaryColor : Colors.transparent,
+                                    borderRadius: BorderRadius.circular(8),
+                                  ),
+                                  alignment: Alignment.center,
+                                  child: Text(
+                                    'Equal',
+                                    style: TextStyle(
+                                      color: _isEqualSplit ? Colors.white : (isDark ? Colors.grey[400] : Colors.grey[600]),
+                                      fontSize: 12,
+                                      fontWeight: FontWeight.w600,
+                                    ),
+                                  ),
+                                ),
+                              ),
+                              GestureDetector(
+                                onTap: () => setState(() => _isEqualSplit = false),
+                                child: Container(
+                                  padding: const EdgeInsets.symmetric(horizontal: 12),
+                                  margin: const EdgeInsets.all(2),
+                                  decoration: BoxDecoration(
+                                    color: !_isEqualSplit ? primaryColor : Colors.transparent,
+                                    borderRadius: BorderRadius.circular(8),
+                                  ),
+                                  alignment: Alignment.center,
+                                  child: Text(
+                                    'Custom',
+                                    style: TextStyle(
+                                      color: !_isEqualSplit ? Colors.white : (isDark ? Colors.grey[400] : Colors.grey[600]),
+                                      fontSize: 12,
+                                      fontWeight: FontWeight.w600,
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 16),
+                    
+                    if (_isEqualSplit)
+                      Container(
+                        padding: const EdgeInsets.all(16),
+                        decoration: BoxDecoration(
+                          color: isDark ? const Color(0xFF1E293B) : Colors.grey[50],
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(
+                            color: isDark ?  Colors.white10 : Colors.grey[200]!,
+                          ),
+                        ),
+                        child: Row(
+                          children: [
+                            Icon(Icons.info_outline, size: 18, color: isDark ? Colors.grey[400] : Colors.grey[600]),
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: Text(
+                                'Checking split for ${_selectedFriendIds.length} friends.\n'
+                                'Each will pay: ₹${((double.tryParse(_amountController.text) ?? 0) / _selectedFriendIds.length).toStringAsFixed(2)}',
+                                style: TextStyle(
+                                  color: isDark ? Colors.grey[300] : Colors.grey[800],
+                                  fontSize: 14,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      )
+                    else
+                      Column(
+                        children: _selectedFriendIds.map((id) {
+                          final friend = expenseProvider.getFriendById(id);
+                          if (friend == null) return const SizedBox.shrink();
+                          
+                          // Ensure controller exists
+                          if (!_splitControllers.containsKey(id)) {
+                            _splitControllers[id] = TextEditingController();
+                          }
+                          
+                          return Padding(
+                            padding: const EdgeInsets.only(bottom: 12),
+                            child: Row(
+                              children: [
+                                CircleAvatar(
+                                  backgroundImage: NetworkImage(friend.avatarUrl),
+                                  radius: 16,
+                                ),
+                                const SizedBox(width: 12),
+                                Expanded(
+                                  child: Text(
+                                    friend.name,
+                                    style: TextStyle(
+                                      color: isDark ? Colors.white : Colors.black87,
+                                      fontWeight: FontWeight.w500,
+                                    ),
+                                  ),
+                                ),
+                                Container(
+                                  width: 100,
+                                  padding: const EdgeInsets.symmetric(horizontal: 12),
+                                  decoration: BoxDecoration(
+                                    color: isDark ? const Color(0xFF1E293B) : Colors.white,
+                                    borderRadius: BorderRadius.circular(8),
+                                    border: Border.all(
+                                      color: isDark ? Colors.white24 : Colors.grey[300]!,
+                                    ),
+                                  ),
+                                  child: Row(
+                                    children: [
+                                      Text(
+                                        '₹',
+                                        style: TextStyle(
+                                          color: isDark ? Colors.grey[400] : Colors.grey[600],
+                                          fontWeight: FontWeight.w600,
+                                        ),
+                                      ),
+                                      const SizedBox(width: 4),
+                                      Expanded(
+                                        child: TextField(
+                                          controller: _splitControllers[id],
+                                          keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                                          decoration: const InputDecoration(
+                                            border: InputBorder.none,
+                                            isDense: true,
+                                          ),
+                                          style: TextStyle(
+                                            color: isDark ? Colors.white : Colors.black,
+                                          ),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ],
+                            ),
+                          );
+                        }).toList(),
+                      ),
+                    const SizedBox(height: 24),
+                  ],
 
                   // Who Paid Toggle
                   Text(
@@ -517,24 +808,84 @@ class _AddTransactionScreenState extends State<AddTransactionScreen> {
 
   String _getMonthName(int month) {
     const months = [
-      'Jan',
-      'Feb',
-      'Mar',
-      'Apr',
-      'May',
-      'Jun',
-      'Jul',
-      'Aug',
-      'Sep',
-      'Oct',
-      'Nov',
-      'Dec'
+      'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'
     ];
     return months[month - 1];
   }
 
   void _saveTransaction() {
-    // TODO: Implement save logic
+    if (_selectedFriendIds.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Please select at least one friend')),
+      );
+      return;
+    }
+    
+    final totalAmount = double.tryParse(_amountController.text) ?? 0.0;
+    if (totalAmount <= 0) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Please enter a valid amount')),
+      );
+      return;
+    }
+
+    // Validate Split
+    Map<String, double> finalAmounts = {};
+    if (!_isEqualSplit) {
+       double currentSum = 0;
+       for (var id in _selectedFriendIds) {
+          final amt = double.tryParse(_splitControllers[id]?.text ?? '0') ?? 0;
+          finalAmounts[id] = amt;
+          currentSum += amt;
+       }
+       // Allow 0.5 difference for rounding flexibility
+       if ((currentSum - totalAmount).abs() > 0.5) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('Split total (₹${currentSum.toStringAsFixed(2)}) does not match Total (₹${totalAmount.toStringAsFixed(2)})')),
+          );
+          return;
+       }
+    } else {
+       final splitAmt = totalAmount / _selectedFriendIds.length;
+       for (var id in _selectedFriendIds) {
+          finalAmounts[id] = splitAmt;
+       }
+    }
+
+    final provider = Provider.of<ExpenseProvider>(context, listen: false);
+
+    for (var friendId in _selectedFriendIds) {
+      final friend = provider.getFriendById(friendId);
+      if (friend == null) continue;
+
+      final amount = finalAmounts[friendId]!;
+      if (amount <= 0.01) continue; // Skip near-zero amounts
+      
+      final transaction = model.Transaction(
+        id: const Uuid().v4(),
+        title: _descriptionController.text.isNotEmpty
+            ? _descriptionController.text
+            : 'Expense',
+        friendId: friend.id,
+        friendName: friend.name.split(' ').first,
+        friendAvatar: friend.avatarUrl,
+        amount: amount,
+        type: _iPaid ? model.TransactionType.owed : model.TransactionType.owing,
+        category: model.TransactionCategory.other,
+        date: _selectedDate,
+        description: _descriptionController.text,
+      );
+
+      provider.addTransaction(transaction);
+
+      // Update friend balance
+      final balanceChange = _iPaid ? amount : -amount;
+      provider.updateFriendBalance(friend.id, balanceChange);
+    }
+
     Navigator.pop(context);
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('Transaction saved successfully')),
+    );
   }
 }

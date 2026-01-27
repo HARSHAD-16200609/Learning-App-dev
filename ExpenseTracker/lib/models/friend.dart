@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'dart:typed_data';
 
 class Friend {
@@ -32,8 +33,8 @@ class Friend {
   String get balanceText {
     if (isSettled) return 'Settled up';
     final absBalance = balance.abs().toStringAsFixed(2);
-    if (owesYou) return 'Owes you \$$absBalance';
-    return 'You owe \$$absBalance';
+    if (owesYou) return 'Owes you ₹$absBalance';
+    return 'You owe ₹$absBalance';
   }
 
   // Get initials for avatar placeholder
@@ -67,6 +68,38 @@ class Friend {
       photoBytes: photoBytes ?? this.photoBytes,
       phoneNumber: phoneNumber ?? this.phoneNumber,
       email: email ?? this.email,
+    );
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'id': id,
+      'name': name,
+      'avatarUrl': avatarUrl,
+      'balance': balance,
+      'lastActivity': lastActivity,
+      'lastActivityDate': lastActivityDate?.toIso8601String(),
+      'photoBytes': photoBytes != null ? base64Encode(photoBytes!) : null,
+      'phoneNumber': phoneNumber,
+      'email': email,
+    };
+  }
+
+  factory Friend.fromJson(Map<String, dynamic> json) {
+    return Friend(
+      id: json['id'],
+      name: json['name'],
+      avatarUrl: json['avatarUrl'],
+      balance: json['balance'],
+      lastActivity: json['lastActivity'],
+      lastActivityDate: json['lastActivityDate'] != null
+          ? DateTime.parse(json['lastActivityDate'])
+          : null,
+      photoBytes: json['photoBytes'] != null
+          ? base64Decode(json['photoBytes'])
+          : null,
+      phoneNumber: json['phoneNumber'],
+      email: json['email'],
     );
   }
 }

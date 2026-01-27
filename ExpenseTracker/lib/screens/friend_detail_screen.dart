@@ -4,6 +4,7 @@ import '../providers/expense_provider.dart';
 import '../models/friend.dart';
 import '../models/transaction.dart';
 import '../widgets/transaction_tile.dart';
+import '../widgets/upi_payment_button.dart';
 
 class FriendDetailScreen extends StatelessWidget {
   final Friend friend;
@@ -154,6 +155,8 @@ class FriendDetailScreen extends StatelessWidget {
                 ),
               ),
             ),
+            const SizedBox(height: 16),
+            const UpiPaymentButton(),
             const SizedBox(height: 32),
 
             // Recent Transactions Header
@@ -230,9 +233,9 @@ class FriendDetailScreen extends StatelessWidget {
     if (friend.isSettled) return 'All settled up!';
     final absBalance = friend.balance.abs().toStringAsFixed(2);
     if (friend.owesYou) {
-      return '${friend.name.split(' ').first} owes you \$$absBalance';
+      return '${friend.name.split(' ').first} owes you ₹$absBalance';
     }
-    return 'You owe ${friend.name.split(' ').first} \$$absBalance';
+    return 'You owe ${friend.name.split(' ').first} ₹$absBalance';
   }
 
   void _showSettleUpDialog(

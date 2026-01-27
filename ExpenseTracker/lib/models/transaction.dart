@@ -29,7 +29,7 @@ class Transaction {
 
   String get amountText {
     final prefix = type == TransactionType.owed ? '+' : '-';
-    return '$prefix\$${amount.toStringAsFixed(2)}';
+    return '$prefix₹${amount.toStringAsFixed(2)}';
   }
 
   String get statusText {
@@ -41,5 +41,40 @@ class Transaction {
       case TransactionType.settled:
         return 'SETTLED';
     }
+  }
+  Map<String, dynamic> toJson() {
+    return {
+      'id': id,
+      'title': title,
+      'friendId': friendId,
+      'friendName': friendName,
+      'friendAvatar': friendAvatar,
+      'amount': amount,
+      'type': type.name, // Enum Name
+      'category': category.name, // Enum Name
+      'date': date.toIso8601String(),
+      'description': description,
+    };
+  }
+
+  factory Transaction.fromJson(Map<String, dynamic> json) {
+    return Transaction(
+      id: json['id'],
+      title: json['title'],
+      friendId: json['friendId'],
+      friendName: json['friendName'],
+      friendAvatar: json['friendAvatar'],
+      amount: json['amount'],
+      type: TransactionType.values.firstWhere(
+        (e) => e.name == json['type'],
+        orElse: () => TransactionType.owing,
+      ),
+      category: TransactionCategory.values.firstWhere(
+        (e) => e.name == json['category'],
+        orElse: () => TransactionCategory.other,
+      ),
+      date: DateTime.parse(json['date']),
+      description: json['description'],
+    );
   }
 }

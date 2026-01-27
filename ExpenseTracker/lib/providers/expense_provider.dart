@@ -1,210 +1,147 @@
+import 'dart:convert';
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../models/friend.dart';
 import '../models/transaction.dart';
 import '../models/group.dart';
 
 class ExpenseProvider extends ChangeNotifier {
-  // Sample avatar URLs using placeholder images
-  static const String _avatar1 = 'https://i.pravatar.cc/150?img=1';
-  static const String _avatar2 = 'https://i.pravatar.cc/150?img=2';
-  static const String _avatar3 = 'https://i.pravatar.cc/150?img=3';
-  static const String _avatar4 = 'https://i.pravatar.cc/150?img=4';
-  static const String _avatar5 = 'https://i.pravatar.cc/150?img=5';
-  static const String _avatar6 = 'https://i.pravatar.cc/150?img=6';
-  static const String _avatar7 = 'https://i.pravatar.cc/150?img=7';
-  static const String _userAvatar = 'https://i.pravatar.cc/150?img=8';
-
+  
   // Current user data
-  final String userName = 'Alex Rivera';
-  String get userAvatar => _userAvatar;
+  String _userName = 'User';
+  String _userAvatar = ''; // Empty string indicates no avatar/default
+
+  String get userName => _userName;
+  String get userAvatar => _userAvatar.isNotEmpty ? _userAvatar : 'https://ui-avatars.com/api/?name=${Uri.encodeComponent(_userName)}&background=random';
 
   // Friends list
-  final List<Friend> _friends = [
-    Friend(
-      id: '1',
-      name: 'Jordan Smith',
-      avatarUrl: _avatar1,
-      balance: 40.00,
-      lastActivity: 'Owes you for Dinner',
-      lastActivityDate: DateTime.now().subtract(const Duration(hours: 2)),
-    ),
-    Friend(
-      id: '2',
-      name: 'Sarah Jenkins',
-      avatarUrl: _avatar2,
-      balance: -15.50,
-      lastActivity: 'You owe for Groceries',
-      lastActivityDate: DateTime.now().subtract(const Duration(days: 1)),
-    ),
-    Friend(
-      id: '3',
-      name: 'Marcus Lee',
-      avatarUrl: _avatar3,
-      balance: 22.00,
-      lastActivity: 'Owes you for Movie Night',
-      lastActivityDate: DateTime.now().subtract(const Duration(days: 2)),
-    ),
-    Friend(
-      id: '4',
-      name: 'Emma Watson',
-      avatarUrl: _avatar4,
-      balance: 0.0,
-      lastActivity: 'Settled up',
-      lastActivityDate: DateTime.now().subtract(const Duration(days: 1)),
-    ),
-    Friend(
-      id: '5',
-      name: 'Michael Chen',
-      avatarUrl: _avatar5,
-      balance: -45.20,
-      lastActivity: 'You owe for Restaurant',
-      lastActivityDate: DateTime.now().subtract(const Duration(days: 3)),
-    ),
-    Friend(
-      id: '6',
-      name: 'James Wilson',
-      avatarUrl: _avatar6,
-      balance: 125.00,
-      lastActivity: 'Owes you for Rent',
-      lastActivityDate: DateTime.now().subtract(const Duration(days: 5)),
-    ),
-  ];
+  List<Friend> _friends = [];
 
   // Transactions list
-  final List<Transaction> _transactions = [
-    Transaction(
-      id: '1',
-      title: 'Dinner at Joe\'s Pizza',
-      friendId: '3',
-      friendName: 'Marcus',
-      friendAvatar: _avatar3,
-      amount: 24.50,
-      type: TransactionType.owing,
-      category: TransactionCategory.food,
-      date: DateTime.now(),
-      description: 'Split with Marcus',
-    ),
-    Transaction(
-      id: '2',
-      title: 'Grocery shopping',
-      friendId: '2',
-      friendName: 'Sarah',
-      friendAvatar: _avatar2,
-      amount: 15.00,
-      type: TransactionType.owed,
-      category: TransactionCategory.shopping,
-      date: DateTime.now(),
-      description: 'Sarah paid you',
-    ),
-    Transaction(
-      id: '3',
-      title: 'Movie tickets',
-      friendId: '3',
-      friendName: 'Marcus',
-      friendAvatar: _avatar3,
-      amount: 12.00,
-      type: TransactionType.owing,
-      category: TransactionCategory.entertainment,
-      date: DateTime.now().subtract(const Duration(days: 1)),
-      description: 'Cinema City',
-    ),
-    Transaction(
-      id: '4',
-      title: 'Gas Station',
-      friendId: '1',
-      friendName: 'Jordan',
-      friendAvatar: _avatar1,
-      amount: 42.80,
-      type: TransactionType.owed,
-      category: TransactionCategory.transport,
-      date: DateTime.now().subtract(const Duration(days: 1)),
-      description: 'Trip to Beach',
-    ),
-    Transaction(
-      id: '5',
-      title: 'Uber Ride',
-      friendId: '7',
-      friendName: 'David',
-      friendAvatar: _avatar7,
-      amount: 8.50,
-      type: TransactionType.owing,
-      category: TransactionCategory.transport,
-      date: DateTime.now().subtract(const Duration(days: 1)),
-      description: 'David paid',
-    ),
-    Transaction(
-      id: '6',
-      title: 'Dinner at Gusto',
-      friendId: '1',
-      friendName: 'Jordan',
-      friendAvatar: _avatar1,
-      amount: 22.50,
-      type: TransactionType.owed,
-      category: TransactionCategory.food,
-      date: DateTime.now().subtract(const Duration(days: 2)),
-    ),
-    Transaction(
-      id: '7',
-      title: 'Uber Ride',
-      friendId: '5',
-      friendName: 'Michael',
-      friendAvatar: _avatar5,
-      amount: 12.00,
-      type: TransactionType.owed,
-      category: TransactionCategory.transport,
-      date: DateTime.now().subtract(const Duration(days: 5)),
-    ),
-    Transaction(
-      id: '8',
-      title: 'Grocery Split',
-      friendId: '2',
-      friendName: 'Sarah',
-      friendAvatar: _avatar2,
-      amount: 10.50,
-      type: TransactionType.owed,
-      category: TransactionCategory.shopping,
-      date: DateTime.now().subtract(const Duration(days: 7)),
-    ),
-    Transaction(
-      id: '9',
-      title: 'Movie Tickets',
-      friendId: '3',
-      friendName: 'Marcus',
-      friendAvatar: _avatar3,
-      amount: 15.00,
-      type: TransactionType.settled,
-      category: TransactionCategory.entertainment,
-      date: DateTime.now().subtract(const Duration(days: 10)),
-    ),
-  ];
+  List<Transaction> _transactions = [];
 
   // Groups list
-  final List<ExpenseGroup> _groups = [
-    ExpenseGroup(
-      id: '1',
-      name: 'Roommates',
-      icon: Icons.home_rounded,
-      color: const Color(0xFF3B82F6),
-      balance: -120.00,
-      memberIds: ['1', '2', '3'],
-    ),
-    ExpenseGroup(
-      id: '2',
-      name: 'Bali Trip',
-      icon: Icons.flight_rounded,
-      color: const Color(0xFF10B981),
-      balance: 450.00,
-      memberIds: ['1', '2', '4', '5'],
-    ),
-    ExpenseGroup(
-      id: '3',
-      name: 'Foodies',
-      icon: Icons.restaurant_rounded,
-      color: const Color(0xFF8B5CF6),
-      balance: 0.0,
-      memberIds: ['2', '3', '6'],
-    ),
-  ];
+  List<ExpenseGroup> _groups = [];
+
+  ExpenseProvider() {
+    _init();
+  }
+
+  Future<void> _init() async {
+    await _loadData();
+  }
+
+  Future<void> _loadData() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      
+      // Load User Profile
+      _userName = prefs.getString('user_name') ?? 'User';
+      _userAvatar = prefs.getString('user_avatar') ?? '';
+
+      // Load Friends
+      final friendsJson = prefs.getString('friends_data');
+      if (friendsJson != null) {
+        final List<dynamic> decoded = jsonDecode(friendsJson);
+        _friends = decoded.map((e) => Friend.fromJson(e)).toList();
+      }
+
+      // Load Transactions
+      final transactionsJson = prefs.getString('transactions_data');
+      if (transactionsJson != null) {
+        final List<dynamic> decoded = jsonDecode(transactionsJson);
+        _transactions = decoded.map((e) => Transaction.fromJson(e)).toList();
+      }
+      
+      // Use test data if empty
+      if (_friends.isEmpty && _transactions.isEmpty) {
+        _generateTestData();
+      }
+    } catch (e) {
+      debugPrint('Error loading data: $e');
+      _friends = [];
+      _transactions = [];
+    }
+    notifyListeners();
+  }
+
+  void _generateTestData() {
+    _userName = 'Test User';
+    
+    _friends = [
+      Friend(id: '1', name: 'Alice', avatarUrl: 'https://i.pravatar.cc/150?u=1', balance: 500.0),
+      Friend(id: '2', name: 'Bob', avatarUrl: 'https://i.pravatar.cc/150?u=2', balance: -200.0),
+      Friend(id: '3', name: 'Charlie', avatarUrl: 'https://i.pravatar.cc/150?u=3', balance: 0.0),
+      Friend(id: '4', name: 'David', avatarUrl: 'https://i.pravatar.cc/150?u=4', balance: 150.0),
+    ];
+
+    _transactions = [
+      Transaction(
+        id: 't1', 
+        title: 'Dinner', 
+        friendId: '1', 
+        friendName: 'Alice', 
+        friendAvatar: 'https://i.pravatar.cc/150?u=1', 
+        amount: 500.0, 
+        type: TransactionType.owed, 
+        category: TransactionCategory.food, 
+        date: DateTime.now().subtract(const Duration(days: 1)),
+      ),
+      Transaction(
+        id: 't2', 
+        title: 'Movie Tickets', 
+        friendId: '2', 
+        friendName: 'Bob', 
+        friendAvatar: 'https://i.pravatar.cc/150?u=2', 
+        amount: 200.0, 
+        type: TransactionType.owing, 
+        category: TransactionCategory.entertainment, 
+        date: DateTime.now().subtract(const Duration(days: 2)),
+      ),
+      Transaction(
+        id: 't3', 
+        title: 'Uber', 
+        friendId: '4', 
+        friendName: 'David', 
+        friendAvatar: 'https://i.pravatar.cc/150?u=4', 
+        amount: 150.0, 
+        type: TransactionType.owed, 
+        category: TransactionCategory.transport, 
+        date: DateTime.now(),
+      ),
+    ];
+    
+    _saveFriends();
+    _saveTransactions();
+    _saveUserProfile();
+  }
+
+  Future<void> _saveUserProfile() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString('user_name', _userName);
+    await prefs.setString('user_avatar', _userAvatar);
+  }
+
+  Future<void> _saveFriends() async {
+    final prefs = await SharedPreferences.getInstance();
+    final String encoded = jsonEncode(_friends.map((e) => e.toJson()).toList());
+    await prefs.setString('friends_data', encoded);
+  }
+
+  Future<void> _saveTransactions() async {
+    final prefs = await SharedPreferences.getInstance();
+    final String encoded = jsonEncode(_transactions.map((e) => e.toJson()).toList());
+    await prefs.setString('transactions_data', encoded);
+  }
+
+  void updateUserProfile(String name, String? avatarUrl) {
+    _userName = name;
+    if (avatarUrl != null) {
+      _userAvatar = avatarUrl;
+    }
+    _saveUserProfile();
+    notifyListeners();
+  }
 
   // Getters
   List<Friend> get friends => List.unmodifiable(_friends);
@@ -227,7 +164,7 @@ class ExpenseProvider extends ChangeNotifier {
         .fold(0.0, (sum, friend) => sum + friend.balance.abs());
   }
 
-  double get weeklyChange => 120.50; // Sample data
+  double get weeklyChange => 0.0; // Dynamic calculation pending
 
   List<Transaction> get todayTransactions {
     final today = DateTime.now();
@@ -261,6 +198,7 @@ class ExpenseProvider extends ChangeNotifier {
 
   void addTransaction(Transaction transaction) {
     _transactions.insert(0, transaction);
+    _saveTransactions();
     notifyListeners();
   }
 
@@ -269,22 +207,29 @@ class ExpenseProvider extends ChangeNotifier {
     final exists = _friends.any((f) => f.id == friend.id);
     if (!exists) {
       _friends.add(friend);
+      _saveFriends();
       notifyListeners();
     }
   }
 
   void addFriendsFromContacts(List<Friend> contacts) {
+    bool changed = false;
     for (final contact in contacts) {
       final exists = _friends.any((f) => f.id == contact.id);
       if (!exists) {
         _friends.add(contact);
+        changed = true;
       }
     }
-    notifyListeners();
+    if (changed) {
+      _saveFriends();
+      notifyListeners();
+    }
   }
 
   void removeFriend(String friendId) {
     _friends.removeWhere((f) => f.id == friendId);
+    _saveFriends();
     notifyListeners();
   }
 
@@ -296,6 +241,7 @@ class ExpenseProvider extends ChangeNotifier {
         balance: friend.balance + amount,
         lastActivityDate: DateTime.now(),
       );
+      _saveFriends();
       notifyListeners();
     }
   }
@@ -309,6 +255,7 @@ class ExpenseProvider extends ChangeNotifier {
         lastActivity: 'Settled up',
         lastActivityDate: DateTime.now(),
       );
+      _saveFriends();
       notifyListeners();
     }
   }

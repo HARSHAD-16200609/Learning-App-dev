@@ -66,7 +66,7 @@ class BalanceCard extends StatelessWidget {
                   ),
                   const SizedBox(height: 8),
                   Text(
-                    '\$${totalBalance.toStringAsFixed(2)}',
+                    '₹${totalBalance.toStringAsFixed(2)}',
                     style: const TextStyle(
                       color: Colors.white,
                       fontSize: 36,
@@ -85,7 +85,7 @@ class BalanceCard extends StatelessWidget {
                       ),
                       const SizedBox(width: 4),
                       Text(
-                        '+\$${weeklyChange.toStringAsFixed(2)} this week',
+                        '+₹${weeklyChange.toStringAsFixed(2)} this week',
                         style: TextStyle(
                           color: Colors.white.withValues(alpha: 0.9),
                           fontSize: 13,
@@ -170,7 +170,7 @@ class BalanceCard extends StatelessWidget {
           ),
           const SizedBox(height: 4),
           Text(
-            '\$${amount.toStringAsFixed(2)}',
+            '₹${amount.toStringAsFixed(2)}',
             style: TextStyle(
               color: color,
               fontSize: 20,
