@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
 import '../screens/ocr_screen.dart';
+import '../screens/add_bill_screen.dart';
+import '../screens/groups_screen.dart';
+import '../screens/split_bill_screen.dart';
 
 class QuickActions extends StatelessWidget {
   const QuickActions({super.key});
@@ -16,7 +19,12 @@ class QuickActions extends StatelessWidget {
           Icons.add_rounded,
           'Add Bill',
           isDark,
-          onTap: () {},
+          onTap: () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(builder: (context) => const AddBillScreen()),
+            );
+          },
         ),
         _buildActionButton(
           context,
@@ -35,14 +43,24 @@ class QuickActions extends StatelessWidget {
           Icons.people_rounded,
           'Groups',
           isDark,
-          onTap: () {},
+          onTap: () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(builder: (context) => const GroupsScreen()),
+            );
+          },
         ),
         _buildActionButton(
           context,
           Icons.call_split_rounded,
           'Split',
           isDark,
-          onTap: () {},
+          onTap: () {
+            Navigator.push(
+              context,
+              MaterialPageRoute(builder: (context) => const SplitBillScreen()),
+            );
+          },
         ),
       ],
     );
