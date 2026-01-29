@@ -90,7 +90,7 @@ class _SplitBillScreenState extends State<SplitBillScreen> {
                 color: isDark ? Colors.white : Colors.black,
               ),
               decoration: InputDecoration(
-                prefixText: '\$ ',
+                prefixText: '₹ ',
                 prefixStyle: TextStyle(
                   fontSize: 32,
                   fontWeight: FontWeight.bold,
@@ -277,7 +277,7 @@ class _SplitBillScreenState extends State<SplitBillScreen> {
                       ),
                       const SizedBox(height: 4),
                       Text(
-                        '\$${_amountPerPerson.toStringAsFixed(2)}',
+                        '₹${_amountPerPerson.toStringAsFixed(2)}',
                         style: const TextStyle(
                           fontSize: 28,
                           fontWeight: FontWeight.bold,

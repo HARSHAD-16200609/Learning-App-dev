@@ -129,7 +129,7 @@ class FriendTile extends StatelessWidget {
   String _getAmountText() {
     if (friend.isSettled) return '';
     final prefix = friend.owesYou ? '+' : '-';
-    return '$prefix\$${friend.balance.abs().toStringAsFixed(2)}';
+    return '$prefix₹${friend.balance.abs().toStringAsFixed(2)}';
   }
 
   String _getTimeAgo(DateTime date) {

@@ -1,5 +1,9 @@
 import 'package:flutter/material.dart';
 import '../models/transaction.dart';
+import '../models/friend.dart';
+import '../widgets/contact_avatar.dart';
+import 'package:provider/provider.dart';
+import '../providers/expense_provider.dart';
 
 class TransactionTile extends StatelessWidget {
   final Transaction transaction;
@@ -38,33 +42,27 @@ class TransactionTile extends StatelessWidget {
       ),
       child: Row(
         children: [
-          // Icon or Avatar
-          if (showAvatar)
-            Container(
-              width: 44,
-              height: 44,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                image: DecorationImage(
-                  image: NetworkImage(transaction.friendAvatar),
-                  fit: BoxFit.cover,
+          // Always show Contact Avatar
+          Builder(
+            builder: (context) {
+              final expenseProvider = Provider.of<ExpenseProvider>(context, listen: false);
+              final friend = expenseProvider.friends.firstWhere(
+                (f) => f.id == transaction.friendId,
+                orElse: () => Friend(
+                  id: transaction.friendId,
+                  name: transaction.friendName,
+                  avatarUrl: transaction.friendAvatar,
                 ),
-              ),
-            )
-          else
-            Container(
-              width: 44,
-              height: 44,
-              decoration: BoxDecoration(
-                color: _getCategoryColor().withValues(alpha: isDark ? 0.2 : 0.1),
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: Icon(
-                _getCategoryIcon(),
-                color: _getCategoryColor(),
-                size: 20,
-              ),
-            ),
+              );
+              
+              return ContactAvatar(
+                friend: friend,
+                size: 44,
+                borderColor: _getCategoryColor().withValues(alpha: 0.5),
+                borderWidth: 2,
+              );
+            },
+          ),
           const SizedBox(width: 14),
 
           // Title and Description

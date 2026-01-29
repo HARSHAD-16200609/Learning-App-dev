@@ -20,6 +20,6 @@ class ExpenseGroup {
   String get balanceText {
     if (balance == 0) return 'Settled';
     final prefix = balance > 0 ? 'Owed' : 'Owe';
-    return '$prefix \$${balance.abs().toStringAsFixed(2)}';
+    return '$prefix ₹${balance.abs().toStringAsFixed(2)}';
   }
 }

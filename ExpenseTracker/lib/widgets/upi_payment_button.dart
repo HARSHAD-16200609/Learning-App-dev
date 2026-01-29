@@ -3,7 +3,16 @@ import 'package:url_launcher/url_launcher.dart';
 
 /// A reusable button widget that initiates a Google Pay (UPI) transaction.
 class UpiPaymentButton extends StatelessWidget {
-  const UpiPaymentButton({super.key});
+  final String phoneNumber;
+  final double amount;
+  final String payeeName;
+
+  const UpiPaymentButton({
+    super.key,
+    required this.phoneNumber,
+    required this.amount,
+    required this.payeeName,
+  });
 
   /// Initiates the UPI payment process using the `url_launcher` package.
   ///
@@ -11,11 +20,24 @@ class UpiPaymentButton extends StatelessWidget {
   /// for the transaction (payee, amount, note, etc.) and attempts to launch
   /// an external application (like Google Pay) to handle the request.
   Future<void> payWithGPay(BuildContext context) async {
-    // defined payment details
-    const String payeeAddress = 'abc@upi';
-    const String payeeName = 'Test Merchant';
-    const String transactionNote = 'Order123';
-    const String amount = '100';
+    // Validate phone number
+    if (phoneNumber.isEmpty) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Contact phone number not available'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+      return;
+    }
+
+    // Construct UPI ID from phone number (assuming GPay format: phone@paytm or phone@okaxis)
+    // You can modify this based on your preferred UPI provider
+    final String payeeAddress = '$phoneNumber@paytm';
+    final String transactionNote = 'Payment to $payeeName';
+    final String amountStr = amount.toStringAsFixed(2);
     const String currency = 'INR';
 
     // Construct the UPI URI
@@ -27,7 +49,7 @@ class UpiPaymentButton extends StatelessWidget {
         'pa': payeeAddress,
         'pn': payeeName,
         'tn': transactionNote,
-        'am': amount,
+        'am': amountStr,
         'cu': currency,
       },
     );
@@ -85,16 +107,16 @@ class UpiPaymentButton extends StatelessWidget {
           borderRadius: BorderRadius.circular(24),
         ),
       ),
-      child: const Row(
+      child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
            // Using a generic icon as we don't have the GPay vector asset handy, 
            // but keeping it semantic.
-          Icon(Icons.payment, size: 20),
-          SizedBox(width: 8),
+          const Icon(Icons.payment, size: 20),
+          const SizedBox(width: 8),
           Text(
-            'Pay with GPay',
-            style: TextStyle(
+            'Pay ₹${amount.toStringAsFixed(2)} with GPay',
+            style: const TextStyle(
               fontSize: 16,
               fontWeight: FontWeight.w600,
             ),

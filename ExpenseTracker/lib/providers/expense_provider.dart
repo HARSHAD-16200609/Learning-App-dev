@@ -53,10 +53,7 @@ class ExpenseProvider extends ChangeNotifier {
         _transactions = decoded.map((e) => Transaction.fromJson(e)).toList();
       }
       
-      // Use test data if empty
-      if (_friends.isEmpty && _transactions.isEmpty) {
-        _generateTestData();
-      }
+    
     } catch (e) {
       debugPrint('Error loading data: $e');
       _friends = [];

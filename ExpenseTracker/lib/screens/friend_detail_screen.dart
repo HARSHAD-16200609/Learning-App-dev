@@ -5,6 +5,7 @@ import '../models/friend.dart';
 import '../models/transaction.dart';
 import '../widgets/transaction_tile.dart';
 import '../widgets/upi_payment_button.dart';
+import '../widgets/contact_avatar.dart';
 
 class FriendDetailScreen extends StatelessWidget {
   final Friend friend;
@@ -48,56 +49,13 @@ class FriendDetailScreen extends StatelessWidget {
             const SizedBox(height: 20),
 
             // Profile Avatar
-            Container(
-              width: 120,
-              height: 120,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                border: Border.all(
-                  color: isDark
-                      ? const Color(0xFF374151)
-                      : const Color(0xFFE2E8F0),
-                  width: 4,
-                ),
-                boxShadow: [
-                  BoxShadow(
-                    color: primaryColor.withValues(alpha: 0.2),
-                    blurRadius: 20,
-                    spreadRadius: 2,
-                  ),
-                ],
-              ),
-              child: Stack(
-                children: [
-                  Container(
-                    decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                      image: DecorationImage(
-                        image: NetworkImage(friend.avatarUrl),
-                        fit: BoxFit.cover,
-                      ),
-                    ),
-                  ),
-                  Positioned(
-                    bottom: 0,
-                    right: 8,
-                    child: Container(
-                      width: 20,
-                      height: 20,
-                      decoration: BoxDecoration(
-                        color: const Color(0xFF10B981),
-                        shape: BoxShape.circle,
-                        border: Border.all(
-                          color: isDark
-                              ? const Color(0xFF0F172A)
-                              : Colors.white,
-                          width: 3,
-                        ),
-                      ),
-                    ),
-                  ),
-                ],
-              ),
+            ContactAvatar(
+              friend: friend,
+              size: 120,
+              borderColor: isDark
+                  ? const Color(0xFF374151)
+                  : const Color(0xFFE2E8F0),
+              borderWidth: 4,
             ),
             const SizedBox(height: 20),
 
@@ -156,7 +114,15 @@ class FriendDetailScreen extends StatelessWidget {
               ),
             ),
             const SizedBox(height: 16),
-            const UpiPaymentButton(),
+            // GPay button - only show when you owe them money
+            if (friend.youOwe)
+              UpiPaymentButton(
+                phoneNumber: friend.phoneNumber ?? '',
+                amount: friend.balance.abs(),
+                payeeName: friend.name,
+              ),
+            if (friend.youOwe)
+              const SizedBox(height: 16),
             const SizedBox(height: 32),
 
             // Recent Transactions Header

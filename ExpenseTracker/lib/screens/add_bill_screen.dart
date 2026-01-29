@@ -102,7 +102,7 @@ class _AddBillScreenState extends State<AddBillScreen> {
                   color: isDark ? Colors.white : Colors.black,
                 ),
                 decoration: InputDecoration(
-                  prefixText: '\$ ',
+                  prefixText: '₹ ',
                   prefixStyle: TextStyle(
                     fontSize: 24,
                     fontWeight: FontWeight.bold,
