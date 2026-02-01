@@ -12,7 +12,7 @@ class ExpenseProvider extends ChangeNotifier {
   String _userAvatar = ''; // Empty string indicates no avatar/default
 
   String get userName => _userName;
-  String get userAvatar => _userAvatar.isNotEmpty ? _userAvatar : 'https://ui-avatars.com/api/?name=${Uri.encodeComponent(_userName)}&background=random';
+  String get userAvatar => _userAvatar.isNotEmpty ? _userAvatar : 'https://ui-avatars.com/api/?name=${Uri.encodeComponent(_userName.isEmpty ? "User" : _userName)}&background=random&size=150';
 
   // Friends list
   List<Friend> _friends = [];

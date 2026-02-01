@@ -4,16 +4,20 @@ import '../models/group.dart';
 class GroupCard extends StatelessWidget {
   final ExpenseGroup group;
   final bool isDark;
+  final VoidCallback? onTap;
 
   const GroupCard({
     super.key,
     required this.group,
     required this.isDark,
+    this.onTap,
   });
 
   @override
   Widget build(BuildContext context) {
-    return Container(
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
       width: 110,
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
@@ -84,6 +88,7 @@ class GroupCard extends StatelessWidget {
             textAlign: TextAlign.center,
           ),
         ],
+      ),
       ),
     );
   }

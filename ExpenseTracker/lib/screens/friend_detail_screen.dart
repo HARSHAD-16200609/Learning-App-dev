@@ -137,17 +137,6 @@ class FriendDetailScreen extends StatelessWidget {
                     fontWeight: FontWeight.w700,
                   ),
                 ),
-                TextButton(
-                  onPressed: () {},
-                  child: Text(
-                    'View All',
-                    style: TextStyle(
-                      color: primaryColor,
-                      fontSize: 14,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                ),
               ],
             ),
             const SizedBox(height: 16),
@@ -175,7 +164,7 @@ class FriendDetailScreen extends StatelessWidget {
                 ),
               )
             else
-              ...transactions.take(5).map((transaction) => Padding(
+              ...transactions.map((transaction) => Padding(
                     padding: const EdgeInsets.only(bottom: 12),
                     child: TransactionTile(
                       transaction: transaction,

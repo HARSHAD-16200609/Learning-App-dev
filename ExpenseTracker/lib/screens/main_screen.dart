@@ -69,7 +69,7 @@ class _MainScreenState extends State<MainScreen> {
           mainAxisAlignment: MainAxisAlignment.spaceAround,
           children: [
             _buildNavItem(Icons.home_rounded, 'Home', 0),
-            _buildNavItem(Icons.people_rounded, 'Groups', 1),
+            _buildNavItem(Icons.people_alt_rounded, 'Friends', 1),
             const SizedBox(width: 48), // Space for FAB
             _buildNavItem(Icons.receipt_long_rounded, 'Activity', 3),
             _buildNavItem(Icons.settings_rounded, 'Settings', 4),

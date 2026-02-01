@@ -13,6 +13,7 @@ class Transaction {
   final TransactionCategory category;
   final DateTime date;
   final String? description;
+  final String? receiptImagePath;
 
   Transaction({
     required this.id,
@@ -25,6 +26,7 @@ class Transaction {
     required this.category,
     required this.date,
     this.description,
+    this.receiptImagePath,
   });
 
   String get amountText {
@@ -42,6 +44,7 @@ class Transaction {
         return 'SETTLED';
     }
   }
+
   Map<String, dynamic> toJson() {
     return {
       'id': id,
@@ -54,6 +57,7 @@ class Transaction {
       'category': category.name, // Enum Name
       'date': date.toIso8601String(),
       'description': description,
+      'receiptImagePath': receiptImagePath,
     };
   }
 
@@ -75,6 +79,7 @@ class Transaction {
       ),
       date: DateTime.parse(json['date']),
       description: json['description'],
+      receiptImagePath: json['receiptImagePath'],
     );
   }
 }

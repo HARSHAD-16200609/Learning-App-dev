@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../providers/expense_provider.dart';
-import '../models/group.dart';
-import '../widgets/group_card.dart';
+import '../models/friend.dart';
+import 'friend_detail_screen.dart';
+import '../widgets/contact_avatar.dart';
 
 class GroupsScreen extends StatelessWidget {
   const GroupsScreen({super.key});
@@ -11,10 +12,10 @@ class GroupsScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final expenseProvider = Provider.of<ExpenseProvider>(context);
+    final friends = expenseProvider.friends;
 
     return SafeArea(
       child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           // Header
           Padding(
@@ -23,7 +24,7 @@ class GroupsScreen extends StatelessWidget {
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 Text(
-                  'Groups',
+                  'Friends',
                   style: TextStyle(
                     color: isDark ? Colors.white : const Color(0xFF1E293B),
                     fontSize: 28,
@@ -31,7 +32,7 @@ class GroupsScreen extends StatelessWidget {
                   ),
                 ),
                 IconButton(
-                  onPressed: () {},
+                  onPressed: () {}, // Future: Add Friend
                   icon: Container(
                     padding: const EdgeInsets.all(8),
                     decoration: BoxDecoration(
@@ -50,161 +51,108 @@ class GroupsScreen extends StatelessWidget {
           ),
           const SizedBox(height: 24),
 
-          // Groups Grid
+          // Friends List
           Expanded(
-            child: GridView.builder(
-              padding: const EdgeInsets.symmetric(horizontal: 20),
-              gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                crossAxisCount: 2,
-                crossAxisSpacing: 16,
-                mainAxisSpacing: 16,
-                childAspectRatio: 0.9,
-              ),
-              itemCount: expenseProvider.groups.length,
-              itemBuilder: (context, index) {
-                return _buildGroupTile(
-                  context,
-                  expenseProvider.groups[index],
-                  isDark,
-                );
-              },
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildGroupTile(
-      BuildContext context, ExpenseGroup group, bool isDark) {
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: isDark ? const Color(0xFF1E293B) : Colors.white,
-        borderRadius: BorderRadius.circular(20),
-        boxShadow: isDark
-            ? null
-            : [
-                BoxShadow(
-                  color: Colors.black.withValues(alpha: 0.05),
-                  blurRadius: 10,
-                  offset: const Offset(0, 4),
-                ),
-              ],
-        border: isDark
-            ? null
-            : Border.all(
-                color: const Color(0xFFE2E8F0),
-                width: 1,
-              ),
-      ),
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Container(
-            width: 52,
-            height: 52,
-            decoration: BoxDecoration(
-              color: group.color.withValues(alpha: isDark ? 0.2 : 0.1),
-              borderRadius: BorderRadius.circular(14),
-            ),
-            child: Icon(
-              group.icon,
-              color: group.color,
-              size: 26,
-            ),
-          ),
-          const SizedBox(height: 10),
-          Text(
-            group.name,
-            style: TextStyle(
-              color: isDark ? Colors.white : const Color(0xFF1E293B),
-              fontSize: 15,
-              fontWeight: FontWeight.w600,
-            ),
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-          ),
-          const SizedBox(height: 4),
-          Text(
-            group.balanceText,
-            style: TextStyle(
-              color: group.balance == 0
-                  ? Colors.grey
-                  : (group.balance > 0
-                      ? const Color(0xFF10B981)
-                      : const Color(0xFFEF4444)),
-              fontSize: 12,
-              fontWeight: FontWeight.w500,
-            ),
-          ),
-          const SizedBox(height: 8),
-          _buildMemberAvatars(group, isDark),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildMemberAvatars(ExpenseGroup group, bool isDark) {
-    final memberCount = group.memberIds.length.clamp(0, 3);
-    final avatarSize = 22.0;
-    final overlap = 8.0;
-    final totalWidth = avatarSize + (memberCount - 1) * (avatarSize - overlap) + 
-                       (group.memberIds.length > 3 ? (avatarSize - overlap) : 0);
-
-    return SizedBox(
-      height: avatarSize,
-      width: totalWidth,
-      child: Stack(
-        children: [
-          ...List.generate(
-            memberCount,
-            (index) => Positioned(
-              left: index * (avatarSize - overlap),
-              child: Container(
-                width: avatarSize,
-                height: avatarSize,
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  border: Border.all(
-                    color: isDark ? const Color(0xFF1E293B) : Colors.white,
-                    width: 2,
-                  ),
-                  image: DecorationImage(
-                    image: NetworkImage(
-                        'https://i.pravatar.cc/150?img=${index + 1}'),
-                    fit: BoxFit.cover,
-                  ),
-                ),
-              ),
-            ),
-          ),
-          if (group.memberIds.length > 3)
-            Positioned(
-              left: memberCount * (avatarSize - overlap),
-              child: Container(
-                width: avatarSize,
-                height: avatarSize,
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  color: isDark ? const Color(0xFF374151) : Colors.grey[200],
-                  border: Border.all(
-                    color: isDark ? const Color(0xFF1E293B) : Colors.white,
-                    width: 2,
-                  ),
-                ),
-                child: Center(
-                  child: Text(
-                    '+${group.memberIds.length - 3}',
-                    style: TextStyle(
-                      color: isDark ? Colors.white70 : Colors.grey[600],
-                      fontSize: 8,
-                      fontWeight: FontWeight.w600,
+            child: friends.isEmpty
+                ? Center(
+                    child: Text(
+                      'No friends yet',
+                      style: TextStyle(
+                        color: isDark ? Colors.grey[500] : Colors.grey[400],
+                        fontSize: 16,
+                      ),
                     ),
+                  )
+                : ListView.separated(
+                    padding: const EdgeInsets.symmetric(horizontal: 20),
+                    itemCount: friends.length,
+                    separatorBuilder: (context, index) => const SizedBox(height: 12),
+                    itemBuilder: (context, index) {
+                      final friend = friends[index];
+                      return GestureDetector(
+                        onTap: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => FriendDetailScreen(friend: friend),
+                            ),
+                          );
+                        },
+                        child: Container(
+                          padding: const EdgeInsets.all(16),
+                          decoration: BoxDecoration(
+                            color: isDark ? const Color(0xFF1E293B) : Colors.white,
+                            borderRadius: BorderRadius.circular(16),
+                            boxShadow: isDark
+                                ? null
+                                : [
+                                    BoxShadow(
+                                      color: Colors.black.withOpacity(0.03),
+                                      blurRadius: 8,
+                                      offset: const Offset(0, 2),
+                                    ),
+                                  ],
+                            border: isDark
+                                ? null
+                                : Border.all(
+                                    color: const Color(0xFFE2E8F0),
+                                    width: 1,
+                                  ),
+                          ),
+                          child: Row(
+                            children: [
+                              ContactAvatar(
+                                friend: friend,
+                                size: 50,
+                              ),
+                              const SizedBox(width: 16),
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      friend.name,
+                                      style: TextStyle(
+                                        color: isDark ? Colors.white : const Color(0xFF1E293B),
+                                        fontSize: 16,
+                                        fontWeight: FontWeight.w600,
+                                      ),
+                                    ),
+                                    const SizedBox(height: 4),
+                                    Text(
+                                      friend.isSettled 
+                                        ? 'Settled' 
+                                        : (friend.owesYou ? 'Owes you' : 'You owe'),
+                                      style: TextStyle(
+                                        color: isDark ? Colors.grey[400] : Colors.grey[500],
+                                        fontSize: 13,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                              if (!friend.isSettled)
+                                Text(
+                                  '₹${friend.balance.abs().toStringAsFixed(2)}',
+                                  style: TextStyle(
+                                    color: friend.owesYou
+                                        ? const Color(0xFF10B981)
+                                        : const Color(0xFFEF4444),
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.w700,
+                                  ),
+                                ),
+                              Icon(
+                                Icons.chevron_right_rounded,
+                                color: isDark ? Colors.grey[600] : Colors.grey[400],
+                              ),
+                            ],
+                          ),
+                        ),
+                      );
+                    },
                   ),
-                ),
-              ),
-            ),
+          ),
         ],
       ),
     );

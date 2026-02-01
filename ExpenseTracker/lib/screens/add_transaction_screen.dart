@@ -1,6 +1,10 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:uuid/uuid.dart';
+import 'package:image_picker/image_picker.dart';
+import 'package:path_provider/path_provider.dart';
+import 'package:path/path.dart' as path;
 import '../providers/expense_provider.dart';
 import '../models/friend.dart';
 import '../models/transaction.dart' as model;
@@ -40,6 +44,7 @@ class _AddTransactionScreenState extends State<AddTransactionScreen> {
   bool _iPaid = true;
   DateTime _selectedDate = DateTime.now();
   final _uuid = const Uuid();
+  File? _pickedImage;
 
   @override
   void initState() {
@@ -683,6 +688,134 @@ class _AddTransactionScreenState extends State<AddTransactionScreen> {
                       ),
                     ),
                   ),
+                  const SizedBox(height: 24),
+
+                  // Proof / Receipt Image
+                  Text(
+                    'PROOF',
+                    style: TextStyle(
+                      color: isDark ? Colors.grey[500] : Colors.grey[600],
+                      fontSize: 12,
+                      fontWeight: FontWeight.w600,
+                      letterSpacing: 0.5,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  if (_pickedImage != null)
+                    Stack(
+                      children: [
+                        Container(
+                          width: double.infinity,
+                          height: 200,
+                          decoration: BoxDecoration(
+                            borderRadius: BorderRadius.circular(14),
+                            image: DecorationImage(
+                              image: FileImage(_pickedImage!),
+                              fit: BoxFit.cover,
+                            ),
+                          ),
+                        ),
+                        Positioned(
+                          top: 8,
+                          right: 8,
+                          child: GestureDetector(
+                            onTap: () {
+                              setState(() {
+                                _pickedImage = null;
+                              });
+                            },
+                            child: Container(
+                              padding: const EdgeInsets.all(4),
+                              decoration: const BoxDecoration(
+                                color: Colors.black54,
+                                shape: BoxShape.circle,
+                              ),
+                              child: const Icon(Icons.close, color: Colors.white, size: 20),
+                            ),
+                          ),
+                        ),
+                      ],
+                    )
+                  else
+                    Row(
+                      children: [
+                        Expanded(
+                          child: GestureDetector(
+                            onTap: () => _pickImage(ImageSource.camera),
+                            child: Container(
+                              height: 52,
+                              decoration: BoxDecoration(
+                                color: isDark ? const Color(0xFF1E293B) : Colors.white,
+                                borderRadius: BorderRadius.circular(14),
+                                border: isDark
+                                    ? null
+                                    : Border.all(
+                                        color: const Color(0xFFE2E8F0),
+                                        width: 1,
+                                      ),
+                              ),
+                              child: Row(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  Icon(
+                                    Icons.camera_alt_rounded,
+                                    color: isDark ? Colors.grey[500] : Colors.grey[400],
+                                    size: 20,
+                                  ),
+                                  const SizedBox(width: 8),
+                                  Text(
+                                    'Camera',
+                                    style: TextStyle(
+                                      color: isDark ? Colors.grey[300] : Colors.grey[700],
+                                      fontSize: 14,
+                                      fontWeight: FontWeight.w500,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: GestureDetector(
+                            onTap: () => _pickImage(ImageSource.gallery),
+                            child: Container(
+                              height: 52,
+                              decoration: BoxDecoration(
+                                color: isDark ? const Color(0xFF1E293B) : Colors.white,
+                                borderRadius: BorderRadius.circular(14),
+                                border: isDark
+                                    ? null
+                                    : Border.all(
+                                        color: const Color(0xFFE2E8F0),
+                                        width: 1,
+                                      ),
+                              ),
+                              child: Row(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  Icon(
+                                    Icons.photo_library_rounded,
+                                    color: isDark ? Colors.grey[500] : Colors.grey[400],
+                                    size: 20,
+                                  ),
+                                  const SizedBox(width: 8),
+                                  Text(
+                                    'Gallery',
+                                    style: TextStyle(
+                                      color: isDark ? Colors.grey[300] : Colors.grey[700],
+                                      fontSize: 14,
+                                      fontWeight: FontWeight.w500,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
                 ],
               ),
             ),
@@ -781,6 +914,17 @@ class _AddTransactionScreenState extends State<AddTransactionScreen> {
     );
   }
 
+  Future<void> _pickImage(ImageSource source) async {
+    final picker = ImagePicker();
+    final pickedFile = await picker.pickImage(source: source, imageQuality: 50);
+
+    if (pickedFile != null) {
+      setState(() {
+        _pickedImage = File(pickedFile.path);
+      });
+    }
+  }
+
   Future<void> _selectDate(BuildContext context) async {
     final DateTime? picked = await showDatePicker(
       context: context,
@@ -813,7 +957,7 @@ class _AddTransactionScreenState extends State<AddTransactionScreen> {
     return months[month - 1];
   }
 
-  void _saveTransaction() {
+  Future<void> _saveTransaction() async {
     if (_selectedFriendIds.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Please select at least one friend')),
@@ -854,6 +998,19 @@ class _AddTransactionScreenState extends State<AddTransactionScreen> {
 
     final provider = Provider.of<ExpenseProvider>(context, listen: false);
 
+    // Save Image persistently if exists
+    String? receiptPath;
+    if (_pickedImage != null) {
+      try {
+        final appDir = await getApplicationDocumentsDirectory();
+        final fileName = 'receipt_${DateTime.now().millisecondsSinceEpoch}.jpg';
+        final savedImage = await _pickedImage!.copy(path.join(appDir.path, fileName));
+        receiptPath = savedImage.path;
+      } catch (e) {
+        debugPrint('Error saving receipt image: $e');
+      }
+    }
+
     for (var friendId in _selectedFriendIds) {
       final friend = provider.getFriendById(friendId);
       if (friend == null) continue;
@@ -874,6 +1031,7 @@ class _AddTransactionScreenState extends State<AddTransactionScreen> {
         category: model.TransactionCategory.other,
         date: _selectedDate,
         description: _descriptionController.text,
+        receiptImagePath: receiptPath,
       );
 
       provider.addTransaction(transaction);
@@ -883,9 +1041,11 @@ class _AddTransactionScreenState extends State<AddTransactionScreen> {
       provider.updateFriendBalance(friend.id, balanceChange);
     }
 
-    Navigator.pop(context);
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Transaction saved successfully')),
-    );
+    if (mounted) {
+      Navigator.pop(context);
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Transaction saved successfully')),
+      );
+    }
   }
 }

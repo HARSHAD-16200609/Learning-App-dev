@@ -1,3 +1,4 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
 import '../models/transaction.dart';
 import '../models/friend.dart';
@@ -19,99 +20,192 @@ class TransactionTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(
-        color: isDark ? const Color(0xFF1E293B) : Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        boxShadow: isDark
-            ? null
-            : [
-                BoxShadow(
-                  color: Colors.black.withValues(alpha: 0.03),
-                  blurRadius: 8,
-                  offset: const Offset(0, 2),
+    return GestureDetector(
+      onTap: () => _showTransactionDetails(context),
+      child: Container(
+        padding: const EdgeInsets.all(14),
+        decoration: BoxDecoration(
+          color: isDark ? const Color(0xFF1E293B) : Colors.white,
+          borderRadius: BorderRadius.circular(16),
+          boxShadow: isDark
+              ? null
+              : [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.03),
+                    blurRadius: 8,
+                    offset: const Offset(0, 2),
+                  ),
+                ],
+          border: isDark
+              ? null
+              : Border.all(
+                  color: const Color(0xFFE2E8F0),
+                  width: 1,
                 ),
-              ],
-        border: isDark
-            ? null
-            : Border.all(
-                color: const Color(0xFFE2E8F0),
-                width: 1,
-              ),
-      ),
-      child: Row(
-        children: [
-          // Always show Contact Avatar
-          Builder(
-            builder: (context) {
-              final expenseProvider = Provider.of<ExpenseProvider>(context, listen: false);
-              final friend = expenseProvider.friends.firstWhere(
-                (f) => f.id == transaction.friendId,
-                orElse: () => Friend(
-                  id: transaction.friendId,
-                  name: transaction.friendName,
-                  avatarUrl: transaction.friendAvatar,
-                ),
-              );
-              
-              return ContactAvatar(
-                friend: friend,
-                size: 44,
-                borderColor: _getCategoryColor().withValues(alpha: 0.5),
-                borderWidth: 2,
-              );
-            },
-          ),
-          const SizedBox(width: 14),
+        ),
+        child: Row(
+          children: [
+            // Always show Contact Avatar
+            Builder(
+              builder: (context) {
+                final expenseProvider = Provider.of<ExpenseProvider>(context, listen: false);
+                final friend = expenseProvider.friends.firstWhere(
+                  (f) => f.id == transaction.friendId,
+                  orElse: () => Friend(
+                    id: transaction.friendId,
+                    name: transaction.friendName,
+                    avatarUrl: transaction.friendAvatar,
+                  ),
+                );
+                
+                return ContactAvatar(
+                  friend: friend,
+                  size: 44,
+                  borderColor: _getCategoryColor().withValues(alpha: 0.5),
+                  borderWidth: 2,
+                );
+              },
+            ),
+            const SizedBox(width: 14),
 
-          // Title and Description
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
+            // Title and Description
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      Flexible(
+                        child: Text(
+                          transaction.title,
+                          style: TextStyle(
+                            color: isDark ? Colors.white : const Color(0xFF1E293B),
+                            fontSize: 15,
+                            fontWeight: FontWeight.w600,
+                          ),
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                      if (transaction.receiptImagePath != null) ...[
+                        const SizedBox(width: 4),
+                        Icon(
+                          Icons.attachment_rounded,
+                          size: 14,
+                          color: isDark ? Colors.grey[500] : Colors.grey[600],
+                        ),
+                      ],
+                    ],
+                  ),
+                  const SizedBox(height: 3),
+                  Text(
+                    _getSubtitle(),
+                    style: TextStyle(
+                      color: isDark ? Colors.grey[500] : Colors.grey[600],
+                      fontSize: 12,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+
+            // Amount and Status
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.end,
               children: [
                 Text(
-                  transaction.title,
+                  transaction.amountText,
                   style: TextStyle(
-                    color: isDark ? Colors.white : const Color(0xFF1E293B),
+                    color: _getAmountColor(),
                     fontSize: 15,
-                    fontWeight: FontWeight.w600,
+                    fontWeight: FontWeight.w700,
                   ),
                 ),
                 const SizedBox(height: 3),
                 Text(
-                  _getSubtitle(),
+                  transaction.statusText,
                   style: TextStyle(
-                    color: isDark ? Colors.grey[500] : Colors.grey[600],
-                    fontSize: 12,
+                    color: isDark ? Colors.grey[500] : Colors.grey[500],
+                    fontSize: 11,
+                    fontWeight: FontWeight.w500,
                   ),
                 ),
               ],
             ),
-          ),
+          ],
+        ),
+      ),
+    );
+  }
 
-          // Amount and Status
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.end,
+  void _showTransactionDetails(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: isDark ? const Color(0xFF1E293B) : Colors.white,
+        title: Text(
+          transaction.title,
+          style: TextStyle(color: isDark ? Colors.white : const Color(0xFF1E293B)),
+        ),
+        content: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                transaction.amountText,
-                style: TextStyle(
-                  color: _getAmountColor(),
-                  fontSize: 15,
-                  fontWeight: FontWeight.w700,
-                ),
+                'Amount: ${transaction.amountText}',
+                style: TextStyle(color: isDark ? Colors.grey[300] : Colors.grey[800], fontSize: 16, fontWeight: FontWeight.bold),
               ),
-              const SizedBox(height: 3),
+              const SizedBox(height: 8),
               Text(
-                transaction.statusText,
-                style: TextStyle(
-                  color: isDark ? Colors.grey[500] : Colors.grey[500],
-                  fontSize: 11,
-                  fontWeight: FontWeight.w500,
-                ),
+                'Date: ${_getSubtitle()}',
+                style: TextStyle(color: isDark ? Colors.grey[400] : Colors.grey[600]),
               ),
+              if (transaction.description != null && transaction.description!.isNotEmpty) ...[
+                const SizedBox(height: 8),
+                Text(
+                  'Note: ${transaction.description}',
+                  style: TextStyle(color: isDark ? Colors.grey[400] : Colors.grey[600]),
+                ),
+              ],
+              const SizedBox(height: 16),
+              if (transaction.receiptImagePath != null)
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Receipt:',
+                      style: TextStyle(fontWeight: FontWeight.bold, color: isDark ? Colors.white : Colors.black),
+                    ),
+                    const SizedBox(height: 8),
+                    ClipRRect(
+                      borderRadius: BorderRadius.circular(8),
+                      child: Image.file(
+                        File(transaction.receiptImagePath!),
+                        fit: BoxFit.cover,
+                        errorBuilder: (context, error, stackTrace) {
+                          return Container(
+                            height: 100,
+                            width: double.infinity,
+                            color: isDark ? Colors.white10 : Colors.grey[200],
+                            child: Center(
+                              child: Text(
+                                'Image not found',
+                                style: TextStyle(color: isDark ? Colors.white54 : Colors.grey[500]),
+                              ),
+                            ),
+                          );
+                        },
+                      ),
+                    ),
+                  ],
+                ),
             ],
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text('Close'),
           ),
         ],
       ),

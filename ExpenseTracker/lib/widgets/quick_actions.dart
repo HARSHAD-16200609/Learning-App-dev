@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import '../screens/ocr_screen.dart';
 import '../screens/add_bill_screen.dart';
-import '../screens/groups_screen.dart';
+import '../screens/actual_groups_screen.dart';
 import '../screens/split_bill_screen.dart';
 
 class QuickActions extends StatelessWidget {
@@ -46,7 +46,7 @@ class QuickActions extends StatelessWidget {
           onTap: () {
             Navigator.push(
               context,
-              MaterialPageRoute(builder: (context) => const GroupsScreen()),
+              MaterialPageRoute(builder: (context) => const ActualGroupsScreen()),
             );
           },
         ),
