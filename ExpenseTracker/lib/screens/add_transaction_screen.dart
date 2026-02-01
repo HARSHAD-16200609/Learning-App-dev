@@ -9,6 +9,7 @@ import '../providers/expense_provider.dart';
 import '../models/friend.dart';
 import '../models/transaction.dart' as model;
 import 'contact_picker_screen.dart';
+import '../widgets/contact_avatar.dart';
 
 class AddTransactionScreen extends StatefulWidget {
   final double? initialAmount;
@@ -16,6 +17,7 @@ class AddTransactionScreen extends StatefulWidget {
   final DateTime? initialDate;
   final String? initialFriendId;
   final bool? initialPaidByMe;
+  final File? initialImage;
 
   const AddTransactionScreen({
     super.key,
@@ -24,6 +26,7 @@ class AddTransactionScreen extends StatefulWidget {
     this.initialDate,
     this.initialFriendId,
     this.initialPaidByMe,
+    this.initialImage,
   });
 
   @override
@@ -61,6 +64,9 @@ class _AddTransactionScreenState extends State<AddTransactionScreen> {
     _iPaid = widget.initialPaidByMe ?? true;
     if (widget.initialDate != null) {
       _selectedDate = widget.initialDate!;
+    }
+    if (widget.initialImage != null) {
+      _pickedImage = widget.initialImage;
     }
     
     _amountController.addListener(_updateSplitAmounts);
@@ -877,24 +883,18 @@ class _AddTransactionScreenState extends State<AddTransactionScreen> {
         child: Column(
           children: [
             Container(
-              width: 56,
-              height: 56,
+              padding: const EdgeInsets.all(2), // Gap for border
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
                 border: Border.all(
                   color: isSelected ? primaryColor : Colors.transparent,
-                  width: 3,
+                  width: 2,
                 ),
               ),
-              child: Container(
-                margin: const EdgeInsets.all(2),
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  image: DecorationImage(
-                    image: NetworkImage(avatarUrl),
-                    fit: BoxFit.cover,
-                  ),
-                ),
+              child: ContactAvatar(
+                name: name,
+                avatarUrl: avatarUrl,
+                size: 50,
               ),
             ),
             const SizedBox(height: 8),

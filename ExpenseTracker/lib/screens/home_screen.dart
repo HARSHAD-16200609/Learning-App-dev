@@ -13,59 +13,146 @@ import 'friend_detail_screen.dart';
 import 'contact_picker_screen.dart';
 import 'settings_screen.dart';
 
-class HomeScreen extends StatelessWidget {
+class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
+
+  @override
+  State<HomeScreen> createState() => _HomeScreenState();
+}
+
+class _HomeScreenState extends State<HomeScreen> {
+  bool _isSelectionMode = false;
+  final Set<String> _selectedTransactionIds = {};
+
+  void _toggleSelectionMode() {
+    setState(() {
+      _isSelectionMode = !_isSelectionMode;
+      _selectedTransactionIds.clear();
+    });
+  }
+
+  void _toggleSelection(String id) {
+    setState(() {
+      if (_selectedTransactionIds.contains(id)) {
+        _selectedTransactionIds.remove(id);
+        if (_selectedTransactionIds.isEmpty) {
+          _isSelectionMode = false;
+        }
+      } else {
+        _selectedTransactionIds.add(id);
+      }
+    });
+  }
+
+  Future<void> _deleteSelectedTransactions(ExpenseProvider provider) async {
+    final count = _selectedTransactionIds.length;
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Delete Transactions?'),
+        content: Text('Are you sure you want to delete $count transaction${count > 1 ? 's' : ''}? This cannot be undone.'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('Cancel'),
+          ),
+          ElevatedButton(
+            onPressed: () => Navigator.pop(context, true),
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.red,
+              foregroundColor: Colors.white,
+            ),
+            child: const Text('Delete'),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmed == true) {
+      await provider.deleteTransactions(_selectedTransactionIds.toList());
+      setState(() {
+        _isSelectionMode = false;
+        _selectedTransactionIds.clear();
+      });
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('$count transaction${count > 1 ? 's' : ''} deleted')),
+        );
+      }
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     final expenseProvider = Provider.of<ExpenseProvider>(context);
 
+    // Filter transactions to show (e.g. recent 5, or all if needed)
+    // For selection mode, we might want to show more, but user said "from recent transaction".
+    // So we just stick to the list displayed.
+
     return SafeArea(
-      child: SingleChildScrollView(
-        physics: const BouncingScrollPhysics(),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // Header
-            _buildHeader(context, isDark, expenseProvider),
-            const SizedBox(height: 20),
+      child: Stack(
+        children: [
+          SingleChildScrollView(
+            physics: const BouncingScrollPhysics(),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // Header
+                _buildHeader(context, isDark, expenseProvider),
+                const SizedBox(height: 20),
 
-            // Balance Card
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 20),
-              child: BalanceCard(
-                totalBalance: expenseProvider.totalBalance,
-                totalOwed: expenseProvider.totalOwed,
-                totalOwing: expenseProvider.totalOwing,
-                weeklyChange: expenseProvider.weeklyChange,
-                isDark: isDark,
-              ),
+                // Balance Card
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 20),
+                  child: BalanceCard(
+                    totalBalance: expenseProvider.totalBalance,
+                    totalOwed: expenseProvider.totalOwed,
+                    totalOwing: expenseProvider.totalOwing,
+                    weeklyChange: expenseProvider.weeklyChange,
+                    isDark: isDark,
+                  ),
+                ),
+                const SizedBox(height: 24),
+
+                // Quick Actions
+                const Padding(
+                  padding: EdgeInsets.symmetric(horizontal: 20),
+                  child: QuickActions(),
+                ),
+                const SizedBox(height: 28),
+
+                // Recent Friends Section
+                _buildRecentFriendsSection(context, isDark, expenseProvider),
+                const SizedBox(height: 28),
+
+                // Recent Transactions Section
+                _buildRecentTransactions(context, isDark, expenseProvider),
+                const SizedBox(height: 100), // Bottom padding for nav bar
+              ],
             ),
-            const SizedBox(height: 24),
-
-            // Quick Actions
-            const Padding(
-              padding: EdgeInsets.symmetric(horizontal: 20),
-              child: QuickActions(),
-            ),
-            const SizedBox(height: 28),
-
-            // Recent Friends Section
-            _buildRecentFriendsSection(context, isDark, expenseProvider),
-            const SizedBox(height: 28),
-
-            // Groups Section - REMOVED
-            // _buildGroupsSection(context, isDark, expenseProvider),
-            // const SizedBox(height: 28),
-
-            // Recent Transactions Section
-            _buildRecentTransactions(context, isDark, expenseProvider),
-            const SizedBox(height: 100), // Bottom padding for nav bar
-          ],
-        ),
+          ),
+          
+          // Selection Mode Floating Header (Optional overlay for easier actions)
+          // Or just handle in the section header. Section header is better.
+        ],
       ),
     );
+  }
+
+  Future<void> _pickProfileImage(BuildContext context, ExpenseProvider provider) async {
+    final ImagePicker picker = ImagePicker();
+    try {
+      final XFile? image = await picker.pickImage(source: ImageSource.gallery);
+      if (image != null) {
+        provider.updateUserProfile(provider.userName, image.path);
+      }
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Failed to pick image: $e')),
+      );
+    }
   }
 
   // ... (Header, Friends, Groups sections remain unchanged) ...
@@ -180,19 +267,7 @@ class HomeScreen extends StatelessWidget {
     );
   }
 
-  Future<void> _pickProfileImage(BuildContext context, ExpenseProvider provider) async {
-    final ImagePicker picker = ImagePicker();
-    try {
-      final XFile? image = await picker.pickImage(source: ImageSource.gallery);
-      if (image != null) {
-        provider.updateUserProfile(provider.userName, image.path);
-      }
-    } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Failed to pick image: $e')),
-      );
-    }
-  }
+
 
   Widget _buildRecentFriendsSection(
       BuildContext context, bool isDark, ExpenseProvider provider) {
@@ -342,30 +417,55 @@ class HomeScreen extends StatelessWidget {
       children: [
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: 20),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text(
-                'Recent Transactions',
-                style: TextStyle(
-                  color: isDark ? Colors.white : const Color(0xFF1E293B),
-                  fontSize: 18,
-                  fontWeight: FontWeight.w700,
+          child: _isSelectionMode
+              ? Row(
+                  children: [
+                    IconButton(
+                      icon: Icon(Icons.close, color: isDark ? Colors.white : Colors.black),
+                      onPressed: _toggleSelectionMode,
+                    ),
+                    const SizedBox(width: 8),
+                    Text(
+                      '${_selectedTransactionIds.length} Selected',
+                      style: TextStyle(
+                        color: isDark ? Colors.white : const Color(0xFF1E293B),
+                        fontSize: 18,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                    const Spacer(),
+                    IconButton(
+                      icon: const Icon(Icons.delete_outline, color: Colors.red),
+                      onPressed: _selectedTransactionIds.isEmpty 
+                          ? null 
+                          : () => _deleteSelectedTransactions(provider),
+                    ),
+                  ],
+                )
+              : Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(
+                      'Recent Transactions',
+                      style: TextStyle(
+                        color: isDark ? Colors.white : const Color(0xFF1E293B),
+                        fontSize: 18,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                    TextButton(
+                      onPressed: () {},
+                      child: Text(
+                        'See All',
+                        style: TextStyle(
+                          color: Theme.of(context).colorScheme.primary,
+                          fontSize: 14,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
-              ),
-              TextButton(
-                onPressed: () {},
-                child: Text(
-                  'See All',
-                  style: TextStyle(
-                    color: Theme.of(context).colorScheme.primary,
-                    fontSize: 14,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-              ),
-            ],
-          ),
         ),
         const SizedBox(height: 12),
         if (provider.transactions.isEmpty)
@@ -381,12 +481,21 @@ class HomeScreen extends StatelessWidget {
             ),
           )
         else
-          ...provider.transactions.take(5).map((transaction) => Padding(
+          ...provider.transactions.take(10).map((transaction) => Padding( // Increased limit for better usability
                 padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 4),
                 child: TransactionTile(
                   transaction: transaction,
                   isDark: isDark,
                   showAvatar: true,
+                  isSelectionMode: _isSelectionMode,
+                  isSelected: _selectedTransactionIds.contains(transaction.id),
+                  onLongPress: () {
+                    if (!_isSelectionMode) {
+                      _toggleSelectionMode();
+                      _toggleSelection(transaction.id);
+                    }
+                  },
+                  onSelectionToggle: () => _toggleSelection(transaction.id),
                 ),
               )),
       ],

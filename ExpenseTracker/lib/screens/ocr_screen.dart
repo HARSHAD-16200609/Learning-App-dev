@@ -105,6 +105,7 @@ class _OCRScreenState extends State<OCRScreen> {
           initialDescription: parsed.description,
           initialFriendId: parsed.friendId,
           initialPaidByMe: parsed.isPaidByMe,
+          initialImage: _selectedImage,
         ),
       ),
     );

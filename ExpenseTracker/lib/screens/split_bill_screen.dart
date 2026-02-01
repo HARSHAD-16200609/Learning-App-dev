@@ -1,4 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import '../models/friend.dart';
+import '../models/transaction.dart';
+import '../providers/expense_provider.dart';
+import '../widgets/contact_avatar.dart';
+import 'contact_picker_screen.dart';
 
 class SplitBillScreen extends StatefulWidget {
   const SplitBillScreen({super.key});
@@ -10,10 +16,8 @@ class SplitBillScreen extends StatefulWidget {
 class _SplitBillScreenState extends State<SplitBillScreen> {
   final _amountController = TextEditingController();
   final _descriptionController = TextEditingController();
-  int _numberOfPeople = 2;
-  String _splitMethod = 'Equally';
-
-  final List<String> _splitMethods = ['Equally', 'By Percentage', 'Custom'];
+  final List<Friend> _selectedFriends = [];
+  bool _includeMe = true;
 
   @override
   void dispose() {
@@ -24,7 +28,27 @@ class _SplitBillScreenState extends State<SplitBillScreen> {
 
   double get _amountPerPerson {
     final amount = double.tryParse(_amountController.text) ?? 0;
-    return _numberOfPeople > 0 ? amount / _numberOfPeople : 0;
+    int count = _selectedFriends.length + (_includeMe ? 1 : 0);
+    return count > 0 ? amount / count : 0;
+  }
+
+  void _addFriends() async {
+    final result = await Navigator.push<dynamic>(
+      context,
+      MaterialPageRoute(
+        builder: (context) => const ContactPickerScreen(multiSelect: true),
+      ),
+    );
+
+    if (result != null && result is List<Friend>) {
+      setState(() {
+        for (var friend in result) {
+          if (!_selectedFriends.any((f) => f.id == friend.id)) {
+            _selectedFriends.add(friend);
+          }
+        }
+      });
+    }
   }
 
   void _splitBill() {
@@ -38,10 +62,44 @@ class _SplitBillScreenState extends State<SplitBillScreen> {
       return;
     }
 
-    // TODO: Save split bill to database
+    if (_selectedFriends.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Please select at least one friend to split with'),
+          backgroundColor: Colors.red,
+        ),
+      );
+      return;
+    }
+
+    final double totalAmount = double.parse(_amountController.text);
+    final double splitAmount = _amountPerPerson;
+    final String description = _descriptionController.text.isEmpty ? 'Split Bill' : _descriptionController.text;
+    final provider = Provider.of<ExpenseProvider>(context, listen: false);
+
+    // Create transactions for each selected friend
+    // Since I paid the full amount, they Owe me their share.
+    for (final friend in _selectedFriends) {
+      final transaction = Transaction(
+        id: DateTime.now().millisecondsSinceEpoch.toString() + friend.id,
+        title: description,
+        friendId: friend.id,
+        friendName: friend.name,
+        friendAvatar: friend.avatarUrl ?? '',
+        amount: splitAmount,
+        type: TransactionType.owed, // They owe me
+        category: TransactionCategory.other,
+        date: DateTime.now(),
+        description: 'Split bill',
+      );
+      
+      provider.addTransaction(transaction);
+      provider.updateFriendBalance(friend.id, splitAmount);
+    }
+
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        content: Text('Bill split among $_numberOfPeople people!'),
+        content: Text('Bill split with ${_selectedFriends.length} friends!'),
         backgroundColor: Colors.green,
       ),
     );
@@ -58,12 +116,15 @@ class _SplitBillScreenState extends State<SplitBillScreen> {
         backgroundColor: isDark ? const Color(0xFF1E293B) : Colors.white,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.close),
+          icon: Icon(Icons.close, color: isDark ? Colors.white : Colors.black),
           onPressed: () => Navigator.pop(context),
         ),
-        title: const Text(
+        title: Text(
           'Split Bill',
-          style: TextStyle(fontWeight: FontWeight.bold),
+          style: TextStyle(
+            fontWeight: FontWeight.bold,
+            color: isDark ? Colors.white : Colors.black,
+          ),
         ),
       ),
       body: SingleChildScrollView(
@@ -121,8 +182,10 @@ class _SplitBillScreenState extends State<SplitBillScreen> {
             const SizedBox(height: 12),
             TextField(
               controller: _descriptionController,
+              style: TextStyle(color: isDark ? Colors.white : Colors.black),
               decoration: InputDecoration(
                 hintText: 'Dinner, Movie, etc.',
+                hintStyle: TextStyle(color: isDark ? Colors.grey[500] : Colors.grey[400]),
                 filled: true,
                 fillColor: isDark ? const Color(0xFF1E293B) : Colors.white,
                 border: OutlineInputBorder(
@@ -134,52 +197,24 @@ class _SplitBillScreenState extends State<SplitBillScreen> {
 
             const SizedBox(height: 24),
 
-            // Split Method
-            Text(
-              'Split Method',
-              style: TextStyle(
-                fontSize: 16,
-                fontWeight: FontWeight.w600,
-                color: isDark ? Colors.white : const Color(0xFF1E293B),
-              ),
-            ),
-            const SizedBox(height: 12),
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 16),
-              decoration: BoxDecoration(
-                color: isDark ? const Color(0xFF1E293B) : Colors.white,
-                borderRadius: BorderRadius.circular(16),
-              ),
-              child: DropdownButtonHideUnderline(
-                child: DropdownButton<String>(
-                  value: _splitMethod,
-                  isExpanded: true,
-                  icon: const Icon(Icons.keyboard_arrow_down),
-                  items: _splitMethods.map((String method) {
-                    return DropdownMenuItem<String>(
-                      value: method,
-                      child: Text(method),
-                    );
-                  }).toList(),
-                  onChanged: (String? newValue) {
-                    setState(() {
-                      _splitMethod = newValue!;
-                    });
-                  },
+            // Split By Section
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                 Text(
+                  'Split With',
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w600,
+                    color: isDark ? Colors.white : const Color(0xFF1E293B),
+                  ),
                 ),
-              ),
-            ),
-
-            const SizedBox(height: 24),
-
-            // Number of People
-            Text(
-              'Number of People',
-              style: TextStyle(
-                fontSize: 16,
-                fontWeight: FontWeight.w600,
-                color: isDark ? Colors.white : const Color(0xFF1E293B),
-              ),
+                TextButton.icon(
+                  onPressed: _addFriends,
+                  icon: const Icon(Icons.add_circle_outline),
+                  label: const Text('Add Friends'),
+                ),
+              ],
             ),
             const SizedBox(height: 12),
             Container(
@@ -188,69 +223,36 @@ class _SplitBillScreenState extends State<SplitBillScreen> {
                 color: isDark ? const Color(0xFF1E293B) : Colors.white,
                 borderRadius: BorderRadius.circular(16),
               ),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              child: Column(
                 children: [
-                  IconButton(
-                    onPressed: () {
-                      if (_numberOfPeople > 2) {
-                        setState(() => _numberOfPeople--);
-                      }
-                    },
-                    icon: Container(
-                      padding: const EdgeInsets.all(8),
-                      decoration: BoxDecoration(
-                        color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.1),
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      child: Icon(
-                        Icons.remove,
-                        color: Theme.of(context).colorScheme.primary,
-                      ),
-                    ),
-                  ),
-                  Column(
-                    children: [
-                      Text(
-                        '$_numberOfPeople',
-                        style: TextStyle(
-                          fontSize: 32,
-                          fontWeight: FontWeight.bold,
-                          color: isDark ? Colors.white : Colors.black,
+                   // Me Option
+                   _buildPersonRow(
+                      context, 
+                      name: 'You', 
+                      isSelected: _includeMe, 
+                      onTap: () => setState(() => _includeMe = !_includeMe)
+                   ),
+                   const Divider(),
+                   if (_selectedFriends.isEmpty)
+                      Padding(
+                        padding: const EdgeInsets.symmetric(vertical: 8.0),
+                        child: Text(
+                          'No friends selected',
+                          style: TextStyle(color: Colors.grey[500]),
                         ),
-                      ),
-                      Text(
-                        'people',
-                        style: TextStyle(
-                          fontSize: 14,
-                          color: isDark ? Colors.white70 : Colors.grey[600],
-                        ),
-                      ),
-                    ],
-                  ),
-                  IconButton(
-                    onPressed: () {
-                      setState(() => _numberOfPeople++);
-                    },
-                    icon: Container(
-                      padding: const EdgeInsets.all(8),
-                      decoration: BoxDecoration(
-                        color: Theme.of(context).colorScheme.primary.withValues(alpha: 0.1),
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      child: Icon(
-                        Icons.add,
-                        color: Theme.of(context).colorScheme.primary,
-                      ),
-                    ),
-                  ),
+                      )
+                   else
+                     ..._selectedFriends.map((friend) => Padding(
+                       padding: const EdgeInsets.only(bottom: 8.0),
+                       child: _buildFriendRow(context, friend),
+                     )),
                 ],
               ),
             ),
 
             const SizedBox(height: 24),
 
-            // Amount Per Person
+            // Amount Per Person Display
             Container(
               padding: const EdgeInsets.all(20),
               decoration: BoxDecoration(
@@ -292,10 +294,13 @@ class _SplitBillScreenState extends State<SplitBillScreen> {
                       color: Colors.white.withValues(alpha: 0.2),
                       borderRadius: BorderRadius.circular(12),
                     ),
-                    child: const Icon(
-                      Icons.people,
-                      color: Colors.white,
-                      size: 32,
+                    child: Text(
+                      '${_selectedFriends.length + (_includeMe ? 1 : 0)}',
+                      style: const TextStyle(
+                        color: Colors.white, 
+                        fontSize: 24, 
+                        fontWeight: FontWeight.bold
+                      ),
                     ),
                   ),
                 ],
@@ -331,4 +336,65 @@ class _SplitBillScreenState extends State<SplitBillScreen> {
       ),
     );
   }
+
+  Widget _buildPersonRow(BuildContext context, {required String name, required bool isSelected, required VoidCallback onTap}) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    return GestureDetector(
+      onTap: onTap,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: 8),
+        child: Row(
+          children: [
+             CircleAvatar(
+               backgroundColor: Theme.of(context).colorScheme.primary.withOpacity(0.2),
+               child: Icon(Icons.person, color: Theme.of(context).colorScheme.primary),
+             ),
+             const SizedBox(width: 12),
+             Text(name, style: TextStyle(
+               color: isDark ? Colors.white : Colors.black,
+               fontWeight: FontWeight.w600,
+               fontSize: 16,
+             )),
+             const Spacer(),
+             if (isSelected) 
+               Icon(Icons.check_circle, color: Theme.of(context).colorScheme.primary)
+             else 
+               Icon(Icons.circle_outlined, color: Colors.grey[400]),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildFriendRow(BuildContext context, Friend friend) {
+     final isDark = Theme.of(context).brightness == Brightness.dark;
+     return Padding(
+       padding: const EdgeInsets.symmetric(vertical: 8.0),
+       child: Row(
+         children: [
+            ContactAvatar(friend: friend, size: 40),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Text(
+                friend.name,
+                style: TextStyle(
+                  color: isDark ? Colors.white : Colors.black,
+                   fontWeight: FontWeight.w600,
+                   fontSize: 16,
+                ),
+              ),
+            ),
+            IconButton(
+              icon: const Icon(Icons.close, color: Colors.red),
+              onPressed: () {
+                setState(() {
+                  _selectedFriends.remove(friend);
+                });
+              },
+            ),
+         ],
+       ),
+     );
+  }
 }
+

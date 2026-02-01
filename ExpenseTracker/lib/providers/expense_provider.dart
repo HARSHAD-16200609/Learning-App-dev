@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../models/friend.dart';
@@ -51,6 +52,13 @@ class ExpenseProvider extends ChangeNotifier {
       if (transactionsJson != null) {
         final List<dynamic> decoded = jsonDecode(transactionsJson);
         _transactions = decoded.map((e) => Transaction.fromJson(e)).toList();
+      }
+
+      // Load Groups
+      final groupsJson = prefs.getString('groups_data');
+      if (groupsJson != null) {
+        final List<dynamic> decoded = jsonDecode(groupsJson);
+        _groups = decoded.map((e) => ExpenseGroup.fromJson(e)).toList();
       }
       
     
@@ -129,6 +137,12 @@ class ExpenseProvider extends ChangeNotifier {
     final prefs = await SharedPreferences.getInstance();
     final String encoded = jsonEncode(_transactions.map((e) => e.toJson()).toList());
     await prefs.setString('transactions_data', encoded);
+  }
+
+  Future<void> _saveGroups() async {
+    final prefs = await SharedPreferences.getInstance();
+    final String encoded = jsonEncode(_groups.map((e) => e.toJson()).toList());
+    await prefs.setString('groups_data', encoded);
   }
 
   void updateUserProfile(String name, String? avatarUrl) {
@@ -255,5 +269,69 @@ class ExpenseProvider extends ChangeNotifier {
       _saveFriends();
       notifyListeners();
     }
+  }
+
+  void createGroup(String name, List<String> memberIds) {
+    // Generate a color based on name
+    final colors = [
+      Colors.blue, Colors.red, Colors.green, Colors.orange, Colors.purple, 
+      Colors.teal, Colors.indigo, Colors.pink
+    ];
+    final color = colors[name.hashCode.abs() % colors.length];
+    
+    final newGroup = ExpenseGroup(
+      id: DateTime.now().millisecondsSinceEpoch.toString(),
+      name: name,
+      icon: Icons.groups_rounded,
+      color: color,
+      memberIds: memberIds,
+    );
+    
+    _groups.add(newGroup);
+    _saveGroups();
+    notifyListeners();
+  }
+
+  Future<void> deleteTransactions(List<String> transactionIds) async {
+    for (final id in transactionIds) {
+      final index = _transactions.indexWhere((t) => t.id == id);
+      if (index == -1) continue;
+
+      final transaction = _transactions[index];
+      
+      // 1. Reverse Balance Impact
+      // If type was owed (I paid), friend owed me (+). To reverse, I subtract amount.
+      // If type was owing (Friend paid), I owed friend (-). To reverse, I add amount.
+      // Note: updateFriendBalance adds the amount to current balance.
+      // Logic in addTransaction: 
+      // final balanceChange = _iPaid ? amount : -amount;
+      // provider.updateFriendBalance(friend.id, balanceChange);
+      
+      final reverseChange = transaction.type == TransactionType.owed 
+          ? -transaction.amount 
+          : (transaction.type == TransactionType.owing ? transaction.amount : 0.0);
+          
+      if (reverseChange != 0.0) {
+        updateFriendBalance(transaction.friendId, reverseChange);
+      }
+
+      // 2. Delete Receipt Image
+      if (transaction.receiptImagePath != null) {
+        try {
+          final file = File(transaction.receiptImagePath!);
+          if (await file.exists()) {
+            await file.delete();
+          }
+        } catch (e) {
+          debugPrint('Error deleting receipt image: $e');
+        }
+      }
+
+      // 3. Remove Transaction
+      _transactions.removeAt(index);
+    }
+    
+    _saveTransactions();
+    notifyListeners();
   }
 }

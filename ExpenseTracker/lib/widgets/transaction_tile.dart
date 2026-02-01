@@ -9,23 +9,34 @@ import '../providers/expense_provider.dart';
 class TransactionTile extends StatelessWidget {
   final Transaction transaction;
   final bool isDark;
+  final bool isSelectionMode;
+  final bool isSelected;
   final bool showAvatar;
+  final VoidCallback? onLongPress;
+  final VoidCallback? onSelectionToggle;
 
   const TransactionTile({
     super.key,
     required this.transaction,
     required this.isDark,
     this.showAvatar = true,
+    this.isSelectionMode = false,
+    this.isSelected = false,
+    this.onLongPress,
+    this.onSelectionToggle,
   });
 
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
-      onTap: () => _showTransactionDetails(context),
+      onTap: isSelectionMode ? onSelectionToggle : () => _showTransactionDetails(context),
+      onLongPress: onLongPress,
       child: Container(
         padding: const EdgeInsets.all(14),
         decoration: BoxDecoration(
-          color: isDark ? const Color(0xFF1E293B) : Colors.white,
+          color: isSelectionMode && isSelected 
+              ? (isDark ? const Color(0xFF334155) : const Color(0xFFEFF6FF)) 
+              : (isDark ? const Color(0xFF1E293B) : Colors.white),
           borderRadius: BorderRadius.circular(16),
           boxShadow: isDark
               ? null
@@ -36,36 +47,50 @@ class TransactionTile extends StatelessWidget {
                     offset: const Offset(0, 2),
                   ),
                 ],
-          border: isDark
-              ? null
-              : Border.all(
-                  color: const Color(0xFFE2E8F0),
-                  width: 1,
-                ),
+          border: isSelectionMode && isSelected
+              ? Border.all(color: Theme.of(context).primaryColor, width: 2)
+              : (isDark ? null : Border.all(color: const Color(0xFFE2E8F0), width: 1)),
         ),
         child: Row(
           children: [
-            // Always show Contact Avatar
-            Builder(
-              builder: (context) {
-                final expenseProvider = Provider.of<ExpenseProvider>(context, listen: false);
-                final friend = expenseProvider.friends.firstWhere(
-                  (f) => f.id == transaction.friendId,
-                  orElse: () => Friend(
-                    id: transaction.friendId,
-                    name: transaction.friendName,
-                    avatarUrl: transaction.friendAvatar,
+            // Avatar or Checkbox
+            if (isSelectionMode)
+              Container(
+                width: 44,
+                height: 44,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  color: isSelected ? Theme.of(context).primaryColor : Colors.transparent,
+                  border: Border.all(
+                    color: isSelected ? Theme.of(context).primaryColor : Colors.grey,
+                    width: 2,
                   ),
-                );
-                
-                return ContactAvatar(
-                  friend: friend,
-                  size: 44,
-                  borderColor: _getCategoryColor().withValues(alpha: 0.5),
-                  borderWidth: 2,
-                );
-              },
-            ),
+                ),
+                child: isSelected 
+                    ? const Icon(Icons.check, color: Colors.white, size: 28)
+                    : null,
+              )
+            else
+              Builder(
+                builder: (context) {
+                  final expenseProvider = Provider.of<ExpenseProvider>(context, listen: false);
+                  final friend = expenseProvider.friends.firstWhere(
+                    (f) => f.id == transaction.friendId,
+                    orElse: () => Friend(
+                      id: transaction.friendId,
+                      name: transaction.friendName,
+                      avatarUrl: transaction.friendAvatar,
+                    ),
+                  );
+                  
+                  return ContactAvatar(
+                    friend: friend,
+                    size: 44,
+                    borderColor: _getCategoryColor().withValues(alpha: 0.5),
+                    borderWidth: 2,
+                  );
+                },
+              ),
             const SizedBox(width: 14),
 
             // Title and Description
@@ -177,26 +202,52 @@ class TransactionTile extends StatelessWidget {
                       style: TextStyle(fontWeight: FontWeight.bold, color: isDark ? Colors.white : Colors.black),
                     ),
                     const SizedBox(height: 8),
-                    ClipRRect(
-                      borderRadius: BorderRadius.circular(8),
-                      child: Image.file(
-                        File(transaction.receiptImagePath!),
-                        fit: BoxFit.cover,
-                        errorBuilder: (context, error, stackTrace) {
-                          return Container(
-                            height: 100,
-                            width: double.infinity,
-                            color: isDark ? Colors.white10 : Colors.grey[200],
-                            child: Center(
-                              child: Text(
-                                'Image not found',
-                                style: TextStyle(color: isDark ? Colors.white54 : Colors.grey[500]),
+                      GestureDetector(
+                        onTap: () {
+                          Navigator.of(context).push(
+                            MaterialPageRoute(
+                              builder: (_) => Scaffold(
+                                backgroundColor: Colors.black,
+                                appBar: AppBar(
+                                  backgroundColor: Colors.black,
+                                  iconTheme: const IconThemeData(color: Colors.white),
+                                ),
+                                body: Center(
+                                  child: InteractiveViewer(
+                                    child: Image.file(
+                                      File(transaction.receiptImagePath!),
+                                      fit: BoxFit.contain,
+                                    ),
+                                  ),
+                                ),
                               ),
                             ),
                           );
                         },
+                        child: ClipRRect(
+                          borderRadius: BorderRadius.circular(8),
+                          child: FractionallySizedBox(
+                            widthFactor: 1.0, 
+                            child: Image.file(
+                              File(transaction.receiptImagePath!),
+                              fit: BoxFit.cover,
+                              errorBuilder: (context, error, stackTrace) {
+                                return Container(
+                                  height: 100,
+                                  width: double.infinity,
+                                  color: isDark ? Colors.white10 : Colors.grey[200],
+                                  child: Center(
+                                    child: Text(
+                                      'Image not found',
+                                      style: TextStyle(color: isDark ? Colors.white54 : Colors.grey[500]),
+                                    ),
+                                  ),
+                                );
+                              },
+                            ),
+                          ),
+                        ),
                       ),
-                    ),
                   ],
                 ),
             ],
